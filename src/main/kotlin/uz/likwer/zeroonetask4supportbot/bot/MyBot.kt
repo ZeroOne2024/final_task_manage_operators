@@ -4,10 +4,8 @@ import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.TelegramException
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.Update
-import com.pengrad.telegrambot.request.SendMessage
 import lombok.RequiredArgsConstructor
 import uz.likwer.zeroonetask4supportbot.component.SpringContext
-import uz.likwer.zeroonetask4supportbot.enums.MessageEffects
 import uz.likwer.zeroonetask4supportbot.service.BotService
 
 @RequiredArgsConstructor
