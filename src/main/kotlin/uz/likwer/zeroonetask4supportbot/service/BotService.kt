@@ -8,10 +8,9 @@ import uz.likwer.zeroonetask4supportbot.bot.Utils
 
 @Service
 class BotService(private val utils: Utils) {
-    val bot = utils.telegramBot()
-
     fun sendChooseLangMsg(chatId: Long) {
-        bot.execute(
+
+        utils.telegramBot().execute(
             SendMessage(chatId, "Choose language")
                 .replyMarkup(
                     InlineKeyboardMarkup(
@@ -24,6 +23,11 @@ class BotService(private val utils: Utils) {
     }
 
     fun askPhone(chatId: Long) {
-        bot.execute(SendMessage(chatId, "phone"))
+        utils.telegramBot().execute(SendMessage(chatId, "phone"))
+    }
+
+    fun getUser(tgUser: com.pengrad.telegrambot.model.User) {
+        //TODO check user to exist
+        
     }
 }
