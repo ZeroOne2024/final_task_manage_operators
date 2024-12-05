@@ -22,4 +22,55 @@ class BaseEntity(
 )
 
 @Entity(name = "users")
-class User() : BaseEntity()
+class User(
+    @Column(unique = true,nullable = false)
+    val clientId: Int,
+    @Column(unique = true,nullable = false,length = 64)
+    val username: String,
+    @Column(nullable = false,length = 124)
+    val fullName: String,
+    @Column(unique=true,nullable = false, length = 13)
+    val phoneNumber: String,
+    @Enumerated(value = EnumType.STRING)
+    val role: UserRole,
+    @Enumerated(value = EnumType.STRING)
+    val language: Language,
+    @Enumerated(value = EnumType.STRING)
+    val state: UserState
+) : BaseEntity()
+
+@Entity(name = "messages")
+class Messages(
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    val user: User,
+    @ManyToOne
+    @JoinColumn(name = "session_id", nullable = false)
+    val session: Session,
+    val text: String,
+    @Enumerated(value = EnumType.STRING)
+    val messageType: MessageType
+):BaseEntity()
+
+@Entity(name = "sessions")
+class Session(
+    @Column(nullable = true)
+    val rate: Short,
+    @ManyToOne
+    @JoinColumn(name = "operator_id", nullable = false)
+    val operator: User,
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    val user: User,
+    @Enumerated(value = EnumType.STRING)
+    val status: SessionStatus
+):BaseEntity()
+
+@Entity(name = "files")
+class File(
+    @ManyToOne
+    @JoinColumn(name = "message_id", nullable = false)
+    val messages: Messages,
+    @Column(nullable = false)
+    val fileId: Long
+):BaseEntity()
