@@ -1,4 +1,4 @@
-package uz.likwer.zeroonetask4supportbot.enums
+package uz.likwer.zeroonetask4supportbot.bot
 
 enum class MessageEffects(val id: String) {
     FIRE("5104841245755180586"),

@@ -7,9 +7,9 @@ import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.model.request.ChatAction
 import com.pengrad.telegrambot.request.*
 import lombok.RequiredArgsConstructor
+import uz.likwer.zeroonetask4supportbot.backend.UserRepository
+import uz.likwer.zeroonetask4supportbot.backend.UserState
 import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.clearPhone
-import uz.likwer.zeroonetask4supportbot.service.BotService
-import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
@@ -17,6 +17,7 @@ import java.util.concurrent.Executors
 class MyBot(
     private val bot: TelegramBot,
     private val botService: BotService,
+    private val userRepository: UserRepository,
     private val executorService: Executor = Executors.newFixedThreadPool(20)
 ) {
 
@@ -43,8 +44,7 @@ class MyBot(
             if (update.message() != null) {
                 val message = update.message()
                 val tgUser = message.from()
-                //TODO import user from entity package
-//                val user = botService.getUser(tgUser)
+                val user = botService.getUser(tgUser)
                 val chatId = tgUser.id()
 
                 bot.execute(SendChatAction(chatId, ChatAction.typing))
@@ -55,22 +55,24 @@ class MyBot(
                     if (text.equals("/start")) {
                         botService.sendChooseLangMsg(chatId)
                     } else {
-//                        if (user.status == UserStatus.SEND_FULL_NAME) {
-//                            user.fullName = text
-//                        }
+                        if (user.state == UserState.SEND_FULL_NAME) {
+                            user.fullName = text
+                            userRepository.save(user)
+                        }
                     }
                 } else if (message.contact() != null) {
                     val contact = message.contact()
                     val phoneNumber = contact.phoneNumber().clearPhone()
 
                     //TODO
-//                    if (user.status == UserStatus.SEND_PHONE_NUMBER) {
-//                        user.phone = phoneNumber
-//                        bot.execute(SendMessage(chatId, "Send your fullname"))
-//                        user.status = UserStatus.SEND_FULL_NAME
-//                    } else if (user.status == UserStatus.BUSY) {
-//                        botService.sendContactToOperator(user, contact, phoneNumber)
-//                    }
+                    if (user.state == UserState.SEND_PHONE_NUMBER) {
+                        user.phoneNumber = phoneNumber
+                        bot.execute(SendMessage(chatId, "Send your fullname"))
+                        user.state = UserState.SEND_FULL_NAME
+                        userRepository.save(user)
+                    } else if (user.state == UserState.TALKING) {
+                        botService.sendContactToOperator(user, contact, phoneNumber)
+                    }
                 } else if (message.voice() != null) {
                     val voice = message.voice()
                     val fileId = voice.fileId()

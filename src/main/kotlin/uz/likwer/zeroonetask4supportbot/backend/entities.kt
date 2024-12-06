@@ -29,14 +29,15 @@ class BaseUserEntity(
 class User(
     @Id @Column(nullable = false)  var id: Long,
     @Column(unique = true,nullable = false,length = 64) val username: String,
-    @Column(nullable = false,length = 124) val fullName: String,
-    @Column(unique=true,nullable = false, length = 13) val phoneNumber: String,
+    @Column(nullable = false,length = 124) var fullName: String,
+    @Column(unique=true,nullable = false, length = 13) var phoneNumber: String,
     @ElementCollection(targetClass = Language::class)
     @CollectionTable(name = "user_language", joinColumns = [JoinColumn(name = "user_id")])
     @Enumerated(EnumType.STRING)
     var languages: List<Language> = mutableListOf(),
-    @Enumerated(value = EnumType.STRING) val state: UserState = UserState.NEW_USER,
+    @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
     @Enumerated(value = EnumType.STRING) val operatorStatus: OperatorStatus? = null,
+    @Column(nullable = false) var talkingUserId: Long? = null,
     @Enumerated(value = EnumType.STRING) val role: UserRole?=UserRole.USER,
 ) : BaseUserEntity()
 
