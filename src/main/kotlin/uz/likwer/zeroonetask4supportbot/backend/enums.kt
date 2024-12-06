@@ -48,7 +48,7 @@ enum class UserState{
     SEND_PHONE_NUMBER,
     SEND_FULL_NAME,
     ACTIVE_USER,
-
+    TALKING
 }
 
 enum class SessionStatus{
