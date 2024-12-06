@@ -54,8 +54,7 @@ class Messages(
     var session: Session,
     var text: String,
     @Enumerated(value = EnumType.STRING)
-    var messageType: MessageType,
-    var messageDate: Date=Date()
+    var messageType: MessageType
 ):BaseEntity()
 
 @Entity(name = "sessions")
@@ -70,7 +69,6 @@ class Session(
     var status: SessionStatus,
     @Column(nullable = true)
     var rate: Short? = null,
-    var sessionDate: Date=Date()
 ):BaseEntity()
 
 @Entity(name = "files")
