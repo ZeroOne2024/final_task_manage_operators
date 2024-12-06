@@ -16,8 +16,14 @@ class BaseEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null,
     @CreatedDate @Temporal(TemporalType.TIMESTAMP) var createdDate: Date? = null,
     @LastModifiedDate @Temporal(TemporalType.TIMESTAMP) var modifiedDate: Date? = null,
-    @CreatedBy var createdBy: Long? = null,
-    @LastModifiedBy var lastModifiedBy: Long? = null,
+    @Column(nullable = false) @ColumnDefault(value = "false") var deleted: Boolean = false
+)
+
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener::class)
+class BaseUserEntity(
+    @CreatedDate @Temporal(TemporalType.TIMESTAMP) var createdDate: Date? = null,
+    @LastModifiedDate @Temporal(TemporalType.TIMESTAMP) var modifiedDate: Date? = null,
     @Column(nullable = false) @ColumnDefault(value = "false") var deleted: Boolean = false
 )
 

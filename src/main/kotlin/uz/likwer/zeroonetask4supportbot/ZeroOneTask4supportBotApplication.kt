@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import uz.likwer.zeroonetask4supportbot.backend.BaseRepositoryImpl
 
+@EnableJpaAuditing
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = BaseRepositoryImpl::class)
-@EnableJpaAuditing
 class ZeroOneTask4supportBotApplication
 
 fun main(args: Array<String>) {

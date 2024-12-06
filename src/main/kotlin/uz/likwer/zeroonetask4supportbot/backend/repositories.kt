@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.data.jpa.repository.support.JpaEntityInformation
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import org.springframework.data.repository.NoRepositoryBean
@@ -23,6 +24,7 @@ interface BaseRepository<T : BaseEntity> : JpaRepository<T, Long>, JpaSpecificat
     fun saveAndRefresh(t: T): T
 }
 
+@EnableJpaRepositories(repositoryBaseClass = BaseRepositoryImpl::class)
 class BaseRepositoryImpl<T : BaseEntity>(
     entityInformation: JpaEntityInformation<T, Long>,
     private val entityManager: EntityManager
@@ -50,3 +52,11 @@ class BaseRepositoryImpl<T : BaseEntity>(
         return save(t).apply { entityManager.refresh(this) }
     }
 }
+
+interface UserRepository : JpaRepository<User,Long>
+
+interface MessageRepository : BaseRepository<Messages>
+
+interface SessionRepository : BaseRepository<Session>
+
+interface FileRepository : BaseRepository<File>

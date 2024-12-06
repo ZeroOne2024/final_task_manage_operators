@@ -15,28 +15,20 @@ java {
 	}
 }
 
-configurations {
-	compileOnly {
-		extendsFrom(configurations.annotationProcessor.get())
-	}
-}
+//configurations {
+//	compileOnly {
+//		extendsFrom(configurations.annotationProcessor.get())
+//	}
+//}
 
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	compileOnly("org.projectlombok:lombok")
+	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	runtimeOnly("org.postgresql:postgresql")
-	annotationProcessor("org.projectlombok:lombok")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	implementation("com.github.pengrad:java-telegram-bot-api:7.9.1")
 }
 
