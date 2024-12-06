@@ -48,7 +48,7 @@ class BotService {
                 .replyMarkup(
                     ReplyKeyboardMarkup(
                         KeyboardButton("Share phone number").requestContact(true)
-                    )
+                    ).resizeKeyboard(true)
                 )
         )
     }
