@@ -5,10 +5,7 @@ import com.pengrad.telegrambot.TelegramException
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.model.request.ChatAction
-import com.pengrad.telegrambot.request.SendChatAction
-import com.pengrad.telegrambot.request.SendContact
-import com.pengrad.telegrambot.request.SendSticker
-import com.pengrad.telegrambot.request.SendVideo
+import com.pengrad.telegrambot.request.*
 import lombok.RequiredArgsConstructor
 import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.clearPhone
 import uz.likwer.zeroonetask4supportbot.service.BotService
@@ -46,7 +43,7 @@ class MyBot(
             if (update.message() != null) {
                 val message = update.message()
                 val tgUser = message.from()
-                //TODO user from entity package
+                //TODO import user from entity package
 //                val user = botService.getUser(tgUser)
                 val chatId = tgUser.id()
 
@@ -110,6 +107,49 @@ class MyBot(
 
                     //TODO if (user is busy) send to operator
                     bot.execute(SendVideo(chatId, video.fileId()))
+                } else if (message.animation() != null) {
+                    val animation = message.animation()
+                    val fileId = animation.fileId()
+
+                    //TODO if (user is busy) send to operator
+                    bot.execute(SendAnimation(chatId, fileId))
+                } else if (message.sticker() != null) {
+                    val sticker = message.sticker()
+                    val fileId = sticker.fileId()
+
+                    //TODO if (user is busy) send to operator
+                    bot.execute(SendSticker(chatId, fileId))
+                } else if (message.audio() != null) {
+                    val audio = message.audio()
+                    val fileId = audio.fileId
+
+                    //TODO if (user is busy) send to operator
+                    bot.execute(SendAudio(chatId, fileId))
+                } else if (message.voice() != null) {
+                    val voice = message.voice()
+                    val fileId = voice.fileId()
+
+                    //TODO if (user is busy) send to operator
+                    bot.execute(SendVoice(chatId, fileId))
+                } else if (message.document() != null) {
+                    val document = message.document()
+                    val fileId = document.fileId()
+
+                    //TODO if (user is busy) send to operator
+                    bot.execute(SendDocument(chatId, document.fileId()))
+                } else if (message.dice() != null) {
+                    val dice = message.dice()
+                    val emoji = dice.emoji()
+
+                    //TODO if (user is busy) send to operator
+                    bot.execute(SendMessage(chatId, emoji))
+                } else if (message.location() != null) {
+                    val location = message.location()
+                    val lon = location.longitude()
+                    val lat = location.latitude()
+
+                    //TODO if (user is busy) send to operator
+                    bot.execute(SendLocation(chatId, lat, lon))
                 }
             } else if (update.callbackQuery() != null) {
                 val callbackQuery = update.callbackQuery()
