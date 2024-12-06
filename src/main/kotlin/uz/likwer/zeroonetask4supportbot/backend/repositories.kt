@@ -53,10 +53,10 @@ class BaseRepositoryImpl<T : BaseEntity>(
     }
 }
 
-interface UserRepository : JpaRepository<User,Long>
+interface UserRepository : JpaRepository<User,Long>{}
 
 interface MessageRepository : BaseRepository<Messages>
 
 interface SessionRepository : BaseRepository<Session>
-
-interface FileRepository : BaseRepository<File>
+interface LocationRepository : BaseRepository<Location>
+interface ContactRepository : BaseRepository<Contact>

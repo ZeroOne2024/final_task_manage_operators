@@ -28,52 +28,58 @@ class BaseUserEntity(
 @Entity(name = "users")
 class User(
     @Id @Column(nullable = false)  var id: Long,
-    @Column(unique = true,nullable = false,length = 64)
-    val username: String,
-    @Column(nullable = false,length = 124)
-    val fullName: String,
-    @Column(unique=true,nullable = false, length = 13)
-    val phoneNumber: String,
-    @Enumerated(value = EnumType.STRING)
-    val role: UserRole,
-    @Enumerated(value = EnumType.STRING)
-    val language: Language,
-    @Enumerated(value = EnumType.STRING)
-    val state: UserState
+    @Column(unique = true,nullable = false,length = 64) val username: String,
+    @Column(nullable = false,length = 124) val fullName: String,
+    @Column(unique=true,nullable = false, length = 13) val phoneNumber: String,
+    @ElementCollection(targetClass = Language::class)
+    @CollectionTable(name = "user_language", joinColumns = [JoinColumn(name = "user_id")])
+    @Enumerated(EnumType.STRING)
+    var languages: List<Language> = mutableListOf(),
+    @Enumerated(value = EnumType.STRING) val state: UserState = UserState.NEW_USER,
+    @Enumerated(value = EnumType.STRING) val operatorStatus: OperatorStatus? = null,
+    @Enumerated(value = EnumType.STRING) val role: UserRole?=UserRole.USER,
 ) : BaseUserEntity()
 
 @Entity(name = "messages")
 class Messages(
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    val user: User,
-    @ManyToOne
-    @JoinColumn(name = "session_id", nullable = false)
-    val session: Session,
-    val text: String,
-    @Enumerated(value = EnumType.STRING)
-    val messageType: MessageType
+    @ManyToOne @JoinColumn(name = "user_id", nullable = false) val user: User,
+    @ManyToOne @JoinColumn(name = "session_id", nullable = false) val session: Session,
+    val messageId: Int,
+    val messageBotId: Int,
+    @Enumerated(value = EnumType.STRING) val messageType: MessageType,
+    @Column(nullable = true)val text: String?=null,
+    @Column(nullable = true)val caption: String?=null,
+    @Column(nullable = true) val fileId: String?=null,
+    @OneToOne @JoinColumn(nullable = true) val location: Location?=null,
+    @OneToOne @JoinColumn(nullable = true) val contact: Contact?=null,
+
+
 ):BaseEntity()
 
 @Entity(name = "sessions")
 class Session(
-    @Column(nullable = true)
-    val rate: Short,
-    @ManyToOne
-    @JoinColumn(name = "operator_id", nullable = false)
-    val operator: User,
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
     @Enumerated(value = EnumType.STRING)
-    val status: SessionStatus
+    val status: SessionStatus,
+    @ManyToOne
+    @JoinColumn(name = "operator_id", nullable = true)
+    val operator: User?=null,
+    @Column(nullable = true)
+    val rate: Short
 ):BaseEntity()
 
-@Entity(name = "files")
-class File(
-    @ManyToOne
-    @JoinColumn(name = "message_id", nullable = false)
-    val messages: Messages,
-    @Column(nullable = false)
-    val fileId: Long
+
+
+@Entity(name="contacts")
+class Contact(
+    @Column(nullable = false) val name: String,
+    @Column(nullable = false) val phone: String,
+):BaseEntity()
+
+@Entity(name="location")
+class Location(
+    @Column(nullable = false) val latitude: Float,
+    @Column(nullable = false) val longitude: Float,
 ):BaseEntity()
