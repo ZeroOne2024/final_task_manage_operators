@@ -46,6 +46,7 @@ class Messages(
     @ManyToOne @JoinColumn(name = "session_id", nullable = false) val session: Session,
     val messageId: Int,
     val messageBotId: Int,
+    val replyMessageId: Int,
     @Enumerated(value = EnumType.STRING) val messageType: MessageType,
     @Column(nullable = true)val text: String?=null,
     @Column(nullable = true)val caption: String?=null,
