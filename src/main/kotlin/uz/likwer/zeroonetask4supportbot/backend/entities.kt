@@ -24,53 +24,60 @@ class BaseEntity(
 @Entity(name = "users")
 class User(
     @Column(unique = true,nullable = false)
-    val clientId: Int,
+    var userId: Int,
     @Column(unique = true,nullable = false,length = 64)
-    val username: String,
+    var username: String,
     @Column(nullable = false,length = 124)
-    val fullName: String,
+    var fullName: String,
     @Column(unique=true,nullable = false, length = 13)
-    val phoneNumber: String,
+    var phoneNumber: String,
     @Enumerated(value = EnumType.STRING)
-    val role: UserRole,
+    var role: UserRole,
+    @ElementCollection(targetClass = Language::class)
+    @CollectionTable(
+        name = "user_language",
+        joinColumns = [JoinColumn(name = "user_id")]
+    )
+    @Enumerated(EnumType.STRING)
+    var languages: List<Language> = mutableListOf(),
     @Enumerated(value = EnumType.STRING)
-    val language: Language,
-    @Enumerated(value = EnumType.STRING)
-    val state: UserState
+    var state: UserState
 ) : BaseEntity()
 
 @Entity(name = "messages")
 class Messages(
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    val user: User,
+    var user: User,
     @ManyToOne
     @JoinColumn(name = "session_id", nullable = false)
-    val session: Session,
-    val text: String,
+    var session: Session,
+    var text: String,
     @Enumerated(value = EnumType.STRING)
-    val messageType: MessageType
+    var messageType: MessageType,
+    var messageDate: Date=Date()
 ):BaseEntity()
 
 @Entity(name = "sessions")
 class Session(
-    @Column(nullable = true)
-    val rate: Short,
     @ManyToOne
     @JoinColumn(name = "operator_id", nullable = false)
-    val operator: User,
+    var operator: User,
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    val user: User,
+    var user: User,
     @Enumerated(value = EnumType.STRING)
-    val status: SessionStatus
+    var status: SessionStatus,
+    @Column(nullable = true)
+    var rate: Short? = null,
+    var sessionDate: Date=Date()
 ):BaseEntity()
 
 @Entity(name = "files")
 class File(
     @ManyToOne
     @JoinColumn(name = "message_id", nullable = false)
-    val messages: Messages,
+    var messages: Messages,
     @Column(nullable = false)
-    val fileId: Long
+    var fileId: Long
 ):BaseEntity()
