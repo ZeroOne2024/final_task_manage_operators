@@ -37,7 +37,7 @@ class User(
     var languages: List<Language> = mutableListOf(),
     @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
-    @Column(nullable = false) var talkingUserId: Long? = null,
+    @Column(nullable = true) var talkingUserId: Long? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole?=UserRole.USER,
 ) : BaseUserEntity()
 
