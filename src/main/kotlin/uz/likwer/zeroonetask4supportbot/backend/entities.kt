@@ -69,7 +69,7 @@ class Session(
     @JoinColumn(name = "operator_id", nullable = true)
     val operator: User? = null,
     @Column(nullable = true)
-    val rate: Short
+    val rate: Short? = null
 ) : BaseEntity()
 
 
