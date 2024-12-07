@@ -53,7 +53,7 @@ class MyBot(
                     val text = message.text()
 
                     if (text.equals("/start")) {
-                        botService.sendChooseLangMsg(chatId)
+                        botService.sendChooseLangMsg(user)
                     } else {
                         if (user.state == UserState.SEND_FULL_NAME) {
                             user.fullName = text

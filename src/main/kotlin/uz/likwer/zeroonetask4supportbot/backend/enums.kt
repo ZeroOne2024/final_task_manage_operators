@@ -54,6 +54,7 @@ enum class UserState{
     NEW_USER,
     SEND_PHONE_NUMBER,
     SEND_FULL_NAME,
+    SEND_CHOOSE_LANG,
     ACTIVE_USER,
     TALKING
 }

@@ -41,9 +41,9 @@ class BotService(private val userRepository: UserRepository) {
         return Utils.telegramBot()
     }
 
-    fun sendChooseLangMsg(chatId: Long) {
+    fun sendChooseLangMsg(user: User) {
         bot().execute(
-            SendMessage(chatId, "Choose language")
+            SendMessage(user.id, "Choose language")
                 .replyMarkup(
                     InlineKeyboardMarkup(
                         InlineKeyboardButton(text = "🇺🇸", callbackData = "setLangEN"),
