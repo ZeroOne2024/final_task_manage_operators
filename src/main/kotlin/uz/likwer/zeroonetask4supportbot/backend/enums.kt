@@ -1,5 +1,12 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
+enum class ErrorCode(val code: Int) {
+
+    USER_NOT_FOUND(104),
+    SOMETHING_WENT_WRONG(100),
+    USER_ALREADY_EXISTS(101),
+}
+
 enum class UserRole{
 
     ADMIN,

@@ -53,7 +53,10 @@ class BaseRepositoryImpl<T : BaseEntity>(
     }
 }
 
-interface UserRepository : JpaRepository<User,Long>{}
+interface UserRepository : JpaRepository<User,Long>{
+    fun existsByRole(role: UserRole): Boolean
+    fun findAllByRole(userRole: UserRole): List<User>
+}
 
 interface MessageRepository : BaseRepository<Messages>
 
