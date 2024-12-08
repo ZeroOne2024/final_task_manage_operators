@@ -62,12 +62,12 @@ class Session(
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
     @Enumerated(value = EnumType.STRING)
-    val status: SessionStatus,
+    var status: SessionStatus=SessionStatus.WAITING,
     @ManyToOne
     @JoinColumn(name = "operator_id", nullable = true)
-    val operator: User? = null,
+    var operator: User? = null,
     @Column(nullable = true)
-    val rate: Short? = null
+    var rate: Short? = null
 ) : BaseEntity()
 
 

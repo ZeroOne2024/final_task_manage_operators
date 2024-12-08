@@ -5,6 +5,9 @@ enum class ErrorCode(val code: Int) {
     USER_NOT_FOUND(104),
     SOMETHING_WENT_WRONG(100),
     USER_ALREADY_EXISTS(101),
+    SESSION_NOT_FOUND(201),
+    SESSION_ALREADY_BUSY(202),
+    SESSION_CLOSED(203),
 }
 
 enum class UserRole{

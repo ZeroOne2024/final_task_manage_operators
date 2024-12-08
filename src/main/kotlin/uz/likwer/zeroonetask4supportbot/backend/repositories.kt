@@ -7,11 +7,14 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.data.jpa.repository.support.JpaEntityInformation
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import org.springframework.data.repository.NoRepositoryBean
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.data.repository.query.Param
+import java.util.*
 
 @NoRepositoryBean
 interface BaseRepository<T : BaseEntity> : JpaRepository<T, Long>, JpaSpecificationExecutor<T> {
@@ -56,10 +59,121 @@ class BaseRepositoryImpl<T : BaseEntity>(
 interface UserRepository : JpaRepository<User,Long>{
     fun existsByRole(role: UserRole): Boolean
     fun findAllByRole(userRole: UserRole): List<User>
+    fun findByIdAndDeletedFalse(id: Long): User?
 }
 
 interface MessageRepository : BaseRepository<Messages>
 
-interface SessionRepository : BaseRepository<Session>
+interface SessionRepository : BaseRepository<Session>{
+    @Query(
+        """
+    SELECT s.operator, SUM(s.rate)
+    FROM sessions s 
+    WHERE s.rate IS NOT NULL 
+      AND s.createdDate BETWEEN :fromDate AND :toDate
+    GROUP BY s.operator 
+    ORDER BY SUM(s.rate) DESC
+    """
+    )
+    fun findHighestRatedOperatorsByDateRange(
+        @Param("fromDate") fromDate: Date,
+        @Param("toDate") toDate: Date,
+        pageable: Pageable
+    ): Page<Array<Any>>
+    @Query(
+        """
+    SELECT s.operator, SUM(s.rate)
+    FROM sessions s 
+    WHERE s.rate IS NOT NULL 
+      AND s.createdDate BETWEEN :fromDate AND :toDate
+    GROUP BY s.operator 
+    ORDER BY SUM(s.rate) ASC
+    """
+    )
+    fun findLowestRatedOperatorsByDateRange(
+        @Param("fromDate") fromDate: Date,
+        @Param("toDate") toDate: Date,
+        pageable: Pageable
+    ): Page<Array<Any>>
+    @Query(
+        """
+    SELECT s.operator, s.rate
+    FROM sessions s
+    WHERE s.operator.id = :operatorId
+      AND s.rate IS NOT NULL
+    """
+    )
+    fun findOperatorRates(
+        @Param("operatorId") operatorId: Long,
+        pageable: Pageable
+    ): Page<Array<Any>>
+    @Query(
+        """
+    SELECT s
+    FROM sessions s
+    WHERE s.operator.id = :operatorId
+      AND s.createdDate BETWEEN :fromDate AND :toDate
+    """
+    )
+    fun findAllSessionsByOperatorAndDateRange(
+        @Param("operatorId") operatorId: Long,
+        @Param("fromDate") fromDate: Date,
+        @Param("toDate") toDate: Date,
+        pageable: Pageable
+    ): Page<Session>
+    @Query(
+        """
+    SELECT s
+    FROM sessions s
+    WHERE s.user.id = :userId
+      AND s.createdDate BETWEEN :fromDate AND :toDate
+    """
+    )
+    fun findAllSessionsByUserAndDateRange(
+        @Param("userId") userId: Long,
+        @Param("fromDate") fromDate: Date,
+        @Param("toDate") toDate: Date,
+        pageable: Pageable
+    ): Page<Session>
+
+
+
+    @Query(
+        """
+    SELECT s.operator,sum(s.rate)
+    FROM sessions s 
+    WHERE s.rate IS NOT NULL 
+    GROUP BY s.operator 
+    ORDER BY sum(s.rate) DESC
+    """
+    )
+    fun findHighestRatedOperators(pageable: Pageable): Page<Array<Any>>
+    @Query(
+        """
+    SELECT s.operator,sum(s.rate)
+    FROM sessions s 
+    WHERE s.rate IS NOT NULL 
+    GROUP BY s.operator 
+    ORDER BY sum(s.rate) ASC
+    """
+    )
+    fun findLowestRatedOperators(pageable: Pageable): Page<Array<Any>>
+    @Query(
+        "SELECT s FROM sessions s " +
+                "WHERE s.user.id = :userId " +
+                "ORDER BY s.createdDate DESC"
+    )
+    fun findLastSessionByUserId(@Param("userId") userId: Long): Session?
+    @Query(
+        "SELECT s FROM sessions s " +
+                "WHERE s.operator.id = :operatorId " +
+                "ORDER BY s.createdDate DESC"
+    )
+    fun findLastSessionByOperatorId(@Param("operatorId") operatorId: Long): Session?
+    fun getSessionByUserId(userId: Long,pageable: Pageable): Page<Session>
+    fun getSessionByOperatorId(operatorId: Long,pageable: Pageable): Page<Session>
+    fun getSessionByStatus(status: SessionStatus, pageable: Pageable): Page<Session>
+
+}
 interface LocationRepository : BaseRepository<Location>
 interface ContactRepository : BaseRepository<Contact>

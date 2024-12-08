@@ -31,3 +31,12 @@ class UserAlreadyExistException : DBusinessException() {
 class SomethingWentWrongException : DBusinessException(){
     override fun errorCode(): ErrorCode = ErrorCode.SOMETHING_WENT_WRONG
 }
+class SessionNotFoundExistException : DBusinessException() {
+    override fun errorCode(): ErrorCode = ErrorCode.SESSION_NOT_FOUND
+}
+class SessionAlreadyBusyException : DBusinessException() {
+    override fun errorCode(): ErrorCode = ErrorCode.SESSION_ALREADY_BUSY
+}
+class SessionClosedException : DBusinessException() {
+    override fun errorCode(): ErrorCode = ErrorCode.SESSION_CLOSED
+}

@@ -1,5 +1,8 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
+import com.fasterxml.jackson.annotation.JsonFormat
+import java.util.*
+
 data class BaseMessage(val code: Int, val message: String?)
 
 data class AddOperatorRequest(
@@ -24,3 +27,23 @@ data class UserResponse(
         }
     }
 }
+
+
+data class SessionInfo(
+    val user: UserResponse,
+    val status: SessionStatus,
+    val operator: UserResponse?,
+    val rate: Short?
+)
+
+data class RateInfo(
+    val rate: Short,
+    val operator: UserResponse,
+)
+
+data class DateRangeDTO(
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    val fromDate: Date,
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    val toDate: Date
+)
