@@ -7,8 +7,7 @@ import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.model.request.ChatAction
 import com.pengrad.telegrambot.request.*
 import lombok.RequiredArgsConstructor
-import uz.likwer.zeroonetask4supportbot.backend.UserRepository
-import uz.likwer.zeroonetask4supportbot.backend.UserState
+import uz.likwer.zeroonetask4supportbot.backend.*
 import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.clearPhone
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -18,6 +17,9 @@ class MyBot(
     private val bot: TelegramBot,
     private val botService: BotService,
     private val userRepository: UserRepository,
+    private val contactRepository: ContactRepository,
+    private val locationRepository: LocationRepository,
+    private val messageRepository: MessageRepository,
     private val executorService: Executor = Executors.newFixedThreadPool(20)
 ) {
 
@@ -67,20 +69,24 @@ class MyBot(
                     //TODO
                     if (user.state == UserState.SEND_PHONE_NUMBER) {
                         user.phoneNumber = phoneNumber
-                        bot.execute(SendMessage(chatId, "Send your fullname"))
+                        bot.execute(SendMessage(chatId, "Send your full name"))
                         user.state = UserState.SEND_FULL_NAME
                         userRepository.save(user)
+
                     } else if (user.state == UserState.TALKING) {
                         botService.sendContactToOperator(user, contact, phoneNumber)
+                        contactRepository
                     }
                 } else if (message.voice() != null) {
                     val voice = message.voice()
                     val fileId = voice.fileId()
 
-                    //TODO
-//                    if (user.status == UserStatus.BUSY) {
+
+                   //TODO
+//                    if (user.state == UserState.TALKING) {
 //                        botService.sendVoiceToOperator(user, voice)
-//                    }
+//                    }else if(user.state == UserStatus.ACTIVE){  }
+
                 } else if (message.audio() != null) {
                     val audio = message.audio()
                     val fileId = audio.fileId

@@ -54,8 +54,6 @@ class Messages(
     @Column(nullable = true) val fileId: String? = null,
     @OneToOne @JoinColumn(nullable = true) val location: Location? = null,
     @OneToOne @JoinColumn(nullable = true) val contact: Contact? = null,
-
-
     ) : BaseEntity()
 
 @Entity(name = "sessions")

@@ -36,8 +36,8 @@ enum class MessageType{
     TEXT,
     PHOTO,
     VIDEO,
-    CONTACT,
     VIDEO_NOTE,
+    CONTACT,
     STICKER,
     AUDIO,
     ANIMATION,
@@ -45,7 +45,6 @@ enum class MessageType{
     GAME,
     INVOICE,
     LOCATION,
-    POLL,
     VOICE
 }
 

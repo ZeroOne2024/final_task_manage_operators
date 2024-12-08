@@ -2,6 +2,7 @@ package uz.likwer.zeroonetask4supportbot.backend
 
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component
+import java.util.concurrent.ConcurrentHashMap
 
 @Component
 class DataLoader(
@@ -16,8 +17,13 @@ class DataLoader(
                 UserState.NEW_USER,null,null,UserRole.ADMIN)
 
             userRepository.save(admin)
-
         }
-
     }
+
+    // Userlarni navbatini manage qilish uchun
+
+    var queueMapUz: MutableMap<Long, List<Messages>> = ConcurrentHashMap()
+    var queueMapRu: MutableMap<Long, List<Messages>> = ConcurrentHashMap()
+    var queueMapEn: MutableMap<Long, List<Messages>> = ConcurrentHashMap()
+
 }
