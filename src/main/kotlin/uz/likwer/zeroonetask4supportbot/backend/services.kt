@@ -77,6 +77,14 @@ class UserServiceImpl(
         user.role = UserRole.USER
         return UserResponse.toResponse(userRepository.save(user))
     }
+    override fun deleteUser(userId: Long) {
+
+        val optional = userRepository.findById(userId)
+        if(optional.isEmpty) throw UserNotFoundException()
+        val user = optional.get()
+        user.deleted = true
+        userRepository.save(user)
+    }
 }
 
 @Service
@@ -215,15 +223,6 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
             val totalRate = result[1] as Number
             RateInfo(rate = totalRate.toShort(), operator = UserResponse.toResponse(operator))
         }
-    }
-
-    override fun deleteUser(userId: Long) {
-
-        val optional = userRepository.findById(userId)
-        if(optional.isEmpty) throw UserNotFoundException()
-        val user = optional.get()
-        user.deleted = true
-        userRepository.save(user)
     }
 
 
