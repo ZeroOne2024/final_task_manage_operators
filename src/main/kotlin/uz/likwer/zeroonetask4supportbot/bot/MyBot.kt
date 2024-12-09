@@ -20,6 +20,8 @@ class MyBot(
     private val botTools: BotTools,
     private val sessionService: SessionService,
     private val messageRepository: MessageRepository,
+    private val locationRepository: LocationRepository,
+    private val contactRepository: ContactRepository,
     private val executorService: Executor = Executors.newFixedThreadPool(20)
 ) {
 
@@ -81,10 +83,10 @@ class MyBot(
                     val caption = message.caption()
                     val text = message.text()
                     val location = message.location()?.let {
-                        Location(it.latitude(), it.longitude())
+                        locationRepository.save(Location(it.latitude(), it.longitude()))
                     }
                     val contact = message.contact()?.let {
-                        Contact(it.firstName(), it.phoneNumber())
+                        contactRepository.save(Contact(it.firstName(), it.phoneNumber()))
                     }
 
                     if (botTools.isOperator(chatId)) {
