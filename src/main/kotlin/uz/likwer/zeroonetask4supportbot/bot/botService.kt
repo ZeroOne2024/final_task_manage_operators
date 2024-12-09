@@ -1,13 +1,8 @@
 package uz.likwer.zeroonetask4supportbot.bot
 
 import com.pengrad.telegrambot.TelegramBot
-import com.pengrad.telegrambot.model.Audio
-import com.pengrad.telegrambot.model.Contact
-import com.pengrad.telegrambot.model.PhotoSize
-import com.pengrad.telegrambot.model.Voice
 import com.pengrad.telegrambot.model.request.*
 import com.pengrad.telegrambot.request.*
-import jakarta.transaction.Transactional
 
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.backend.*

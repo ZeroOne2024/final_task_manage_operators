@@ -68,7 +68,7 @@ class MyBot(
                     val contact = message.contact()
                     val phoneNumber = contact.phoneNumber().clearPhone()
 
-                    //TODO
+
                     if (user.state == UserState.SEND_PHONE_NUMBER) {
                         user.phoneNumber = phoneNumber
                         bot.execute(SendMessage(chatId, "Send your full name"))
