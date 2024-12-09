@@ -53,7 +53,7 @@ class MyBot(
 
                 bot.execute(SendChatAction(chatId, ChatAction.typing))
                 if (user.state != UserState.ACTIVE_USER){
-                if (message.text() != null) {
+                    if (message.text() != null) {
                     val text = message.text()
 
                     if (text.equals("/start")) {
@@ -76,11 +76,12 @@ class MyBot(
                         userRepository.save(user)
 
                     }
+                }
                 }else {
                     val messageId = message.messageId()
                     val messageReplyId = message.replyToMessage()?.messageId()
                     val typeAndFileId = botTools.determineMessageType(update.message())
-                    val caption = message.caption()
+                    val caption = message?.caption()
                     val text = message.text()
                     val location = message.location()?.let {
                         locationRepository.save(Location(it.latitude(), it.longitude()))
@@ -90,6 +91,9 @@ class MyBot(
                     }
 
                     if (botTools.isOperator(chatId)) {
+                        if(text != null && text.equals("/end")) {
+
+                        }else{
                         val session = sessionService.getOperatorSession(chatId)
                         val newMessage = Messages(
                             user = session.operator!!,
@@ -105,6 +109,7 @@ class MyBot(
                         )
                         val savedMessage = messageRepository.save(newMessage)
                         botService.sendMessageToUser(session.user, savedMessage)
+                        }
                     } else {
                         val session = sessionService.getSession(chatId)
                         val newMessage = Messages(
@@ -127,7 +132,7 @@ class MyBot(
                                 sessionService.setBusy(session.id!!, this.id)
                                 botService.sendMessageToUser(session.operator!!, savedMessage)
                             } ?: {
-                                botService.addMessage(session.user.id, savedMessage, session.user.languages[0].toString())
+                                botService.addMessage(session.id!!, savedMessage, session.user.languages[0].toString())
                             }
                         }
                     }
@@ -226,7 +231,7 @@ class MyBot(
 //                    val lang = data.substring("setLang".length) // lang = "RU","EN","UZ"
 //
 //                    botService.askPhone(chatId)
-                }
+
             }
         } catch (e: Exception) {
             e.printStackTrace()

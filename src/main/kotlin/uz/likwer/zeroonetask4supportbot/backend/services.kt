@@ -137,7 +137,8 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
             .orElseThrow { SessionNotFoundExistException() }
 
         val setOperator = userRepository.findByIdAndDeletedFalse(operatorId)?:throw UserNotFoundException()
-
+        setOperator.operatorStatus=OperatorStatus.BUSY
+        userRepository.save(setOperator)
         return session.run {
             if (status != SessionStatus.WAITING) throw SessionAlreadyBusyException()
 

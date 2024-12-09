@@ -1,7 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
+import org.springframework.stereotype.Service
 import java.util.concurrent.CopyOnWriteArrayList
-
 interface BotTools{
 
     fun isOperator(userId: Long): Boolean
@@ -15,7 +15,7 @@ interface BotTools{
 
 
 }
-
+@Service
 class BotToolsImpl(
     private val userRepository: UserRepository,
 ) : BotTools {
