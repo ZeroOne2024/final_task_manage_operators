@@ -89,33 +89,33 @@ class MyBot(
 
                     if (botTools.isOperator(chatId)) {
                         val session = sessionService.getOperatorSession(chatId)
-                        val newMessage = toMessage(
-                            session.operator!!,
-                            session,
-                            messageId,
-                            messageReplyId,
-                            typeAndFileId.first,
-                            text,
-                            caption,
-                            typeAndFileId.second,
-                            location,
-                            contact
+                        val newMessage = Messages(
+                            user = session.operator!!,
+                            session = session,
+                            messageId = messageId,
+                            replyMessageId = messageReplyId,
+                            messageType = typeAndFileId.first,
+                            text = text,
+                            caption = caption,
+                            fileId = typeAndFileId.second,
+                            location = location,
+                            contact = contact
                         )
                         val savedMessage = messageRepository.save(newMessage)
                         botService.sendMessageToUser(session.user, savedMessage)
                     } else {
                         val session = sessionService.getSession(chatId)
-                        val newMessage = toMessage(
-                            session.user,
-                            session,
-                            messageId,
-                            messageReplyId,
-                            typeAndFileId.first,
-                            text,
-                            caption,
-                            typeAndFileId.second,
-                            location,
-                            contact
+                        val newMessage = Messages(
+                            user = session.user,
+                            session = session,
+                            messageId = messageId,
+                            replyMessageId = messageReplyId,
+                            messageType = typeAndFileId.first,
+                            text = text,
+                            caption = caption,
+                            fileId = typeAndFileId.second,
+                            location = location,
+                            contact = contact
                         )
                         val savedMessage = messageRepository.save(newMessage)
                         session.operator?.run {
@@ -230,29 +230,4 @@ class MyBot(
             e.printStackTrace()
         }
     }
-}
-private fun toMessage(
-    user: User,
-    session: Session,
-    messageId: Int,
-    replyMessageId: Int?,
-    messageType: MessageType,
-    text: String?,
-    caption: String?,
-    fileId: String?,
-    location: Location?,
-    contact: Contact?
-): Messages {
-    return Messages(
-        user = user,
-        session = session,
-        messageId = messageId,
-        replyMessageId = replyMessageId,
-        messageType = messageType,
-        text = text,
-        caption = caption,
-        fileId = fileId,
-        location = location,
-        contact = contact
-    )
 }
