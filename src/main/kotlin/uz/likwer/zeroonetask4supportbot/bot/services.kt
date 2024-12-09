@@ -20,7 +20,11 @@ import uz.likwer.zeroonetask4supportbot.backend.*
 
 
 @Service
-class BotService(private val userRepository: UserRepository) {
+class BotService(
+    private val userRepository: UserRepository,
+    private val messageRepository: MessageRepository,
+    sessionRepository: SessionRepository,
+    repository: MessageRepository,) {
     fun getUser(tgUser: com.pengrad.telegrambot.model.User): User {
         val userOpt = userRepository.findById(tgUser.id())
         if (userOpt.isPresent)
@@ -94,10 +98,13 @@ class BotService(private val userRepository: UserRepository) {
         }
     }
     fun sendMessageToUser(user: User, message: Messages) {
+        message.replyMessageId?.let {
+            val findReplyMessage=messageRepository.findByUserIdAndMessageBotId(user.id,message.replyMessageId!!)?: throw MessageNotFoundException()
+        }
 
         when (message.messageType) {
             MessageType.TEXT -> {
-                bot().execute(SendMessage(user.id, message.text ?: ""))
+                message.messageBotId =bot().execute(SendMessage(user.id, message.text ?: "")).message().messageId()
             }
             MessageType.PHOTO -> {
                 bot().execute(
@@ -140,6 +147,8 @@ class BotService(private val userRepository: UserRepository) {
                 println("Unsupported message type: ${message.messageType}")
             }
         }
+        message.deleted=true
+        messageRepository.save(message)
     }
 
 }

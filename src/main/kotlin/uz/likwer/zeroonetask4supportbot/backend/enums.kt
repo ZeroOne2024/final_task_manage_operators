@@ -8,6 +8,7 @@ enum class ErrorCode(val code: Int) {
     SESSION_NOT_FOUND(201),
     SESSION_ALREADY_BUSY(202),
     SESSION_CLOSED(203),
+    MESSAGE_NOT_FOUND(301),
 }
 
 enum class UserRole{

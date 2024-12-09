@@ -62,7 +62,9 @@ interface UserRepository : JpaRepository<User,Long>{
     fun findByIdAndDeletedFalse(id: Long): User?
 }
 
-interface MessageRepository : BaseRepository<Messages>
+interface MessageRepository : BaseRepository<Messages>{
+    fun findByUserIdAndMessageBotId(userId: Long, messageBotId: Int): Messages?
+}
 
 interface SessionRepository : BaseRepository<Session>{
     @Query(
