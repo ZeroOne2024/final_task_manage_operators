@@ -17,6 +17,9 @@ class MyBot(
     private val bot: TelegramBot,
     private val botService: BotService,
     private val userRepository: UserRepository,
+    private val botTools: BotTools,
+    private val sessionService: SessionService,
+    private val messageRepository: MessageRepository,
     private val executorService: Executor = Executors.newFixedThreadPool(20)
 ) {
 
@@ -47,7 +50,7 @@ class MyBot(
                 val chatId = tgUser.id()
 
                 bot.execute(SendChatAction(chatId, ChatAction.typing))
-
+                if (user.state != UserState.ACTIVE_USER){
                 if (message.text() != null) {
                     val text = message.text()
 
@@ -70,12 +73,67 @@ class MyBot(
                         user.state = UserState.SEND_FULL_NAME
                         userRepository.save(user)
 
-                    } else if (user.state == UserState.TALKING) {
-                        botService.sendContactToOperator(user, contact, phoneNumber)
                     }
-                } else if (message.voice() != null) {
-                    val voice = message.voice()
-                    val fileId = voice.fileId()
+                }else {
+                    val messageId = message.messageId()
+                    val messageReplyId = message.replyToMessage()?.messageId()
+                    val typeAndFileId = botTools.determineMessageType(update.message())
+                    val caption = message.caption()
+                    val text = message.text()
+                    val location = message.location()?.let {
+                        Location(it.latitude(), it.longitude())
+                    }
+                    val contact = message.contact()?.let {
+                        Contact(it.firstName(), it.phoneNumber())
+                    }
+
+                    if (botTools.isOperator(chatId)) {
+                        val session = sessionService.getOperatorSession(chatId)
+                        val newMessage = toMessage(
+                            session.operator!!,
+                            session,
+                            messageId,
+                            messageReplyId,
+                            typeAndFileId.first,
+                            text,
+                            caption,
+                            typeAndFileId.second,
+                            location,
+                            contact
+                        )
+                        val savedMessage = messageRepository.save(newMessage)
+                        botService.sendMessageToUser(session.user, savedMessage)
+                    } else {
+                        val session = sessionService.getSession(chatId)
+                        val newMessage = toMessage(
+                            session.user,
+                            session,
+                            messageId,
+                            messageReplyId,
+                            typeAndFileId.first,
+                            text,
+                            caption,
+                            typeAndFileId.second,
+                            location,
+                            contact
+                        )
+                        val savedMessage = messageRepository.save(newMessage)
+                        session.operator?.run {
+                            botService.sendMessageToUser(session.operator!!, savedMessage)
+                        } ?: {
+                            botTools.findActiveOperator(session.user.languages[0].toString())?.run {
+                                sessionService.setBusy(session.id!!, this.id)
+                                botService.sendMessageToUser(session.operator!!, savedMessage)
+                            } ?: {
+                                botService.addMessage(session.user.id, savedMessage, session.user.languages[0].toString())
+                            }
+                        }
+                    }
+                }
+
+//                } else if (message.voice() != null) {
+//                    val voice = message.voice()
+//                    val fileId = voice.fileId()
 
 
                    //TODO
@@ -172,4 +230,29 @@ class MyBot(
             e.printStackTrace()
         }
     }
+}
+private fun toMessage(
+    user: User,
+    session: Session,
+    messageId: Int,
+    replyMessageId: Int?,
+    messageType: MessageType,
+    text: String?,
+    caption: String?,
+    fileId: String?,
+    location: Location?,
+    contact: Contact?
+): Messages {
+    return Messages(
+        user = user,
+        session = session,
+        messageId = messageId,
+        replyMessageId = replyMessageId,
+        messageType = messageType,
+        text = text,
+        caption = caption,
+        fileId = fileId,
+        location = location,
+        contact = contact
+    )
 }

@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional
 
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.backend.*
+import java.util.concurrent.CopyOnWriteArrayList
 
 
 @Service
@@ -174,51 +175,20 @@ class BotService(
         messageRepository.save(message)
     }
 
-    @Transactional
-    fun getSession(userId: Long): Session {
-        return sessionRepository.findLastSessionByUserId(userId)?.run {
-            if (status == SessionStatus.CLOSED) {
-                userRepository.findByIdAndDeletedFalse(userId)
-                    ?.let { sessionRepository.save(Session(it)) }
-                    ?: throw UserNotFoundException()
-            } else {
-                this
-            }
-        } ?: userRepository.findByIdAndDeletedFalse(userId)
-            ?.let { sessionRepository.save(Session(it)) }
-        ?: throw UserNotFoundException()
-    }
-    @Transactional
-    fun terminateSession(operatorId: Long): Session {
-        return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
-            status=SessionStatus.CLOSED
-            sessionRepository.save(this)
-        }?:throw SessionNotFoundExistException()
-    }
-
-    @Transactional
-    fun setBusy(sessionId: Long, operatorId: Long): Session {
-        val session = sessionRepository.findById(sessionId)
-            .orElseThrow { SessionNotFoundExistException() }
-
-        val setOperator = userRepository.findByIdAndDeletedFalse(operatorId)?:throw UserNotFoundException()
-
-        return session.run {
-            if (status != SessionStatus.WAITING) throw SessionAlreadyBusyException()
-
-            status = SessionStatus.BUSY
-            operator = setOperator
-            sessionRepository.save(this)
+    @Synchronized
+    fun addMessage(id: Long, message: Messages, language: String) {
+        val targetQueue = when (language.lowercase()) {
+            "en" -> DataLoader.queueEn
+            "uz" -> DataLoader.queueUz
+            "ru" -> DataLoader.queueRu
+            else -> throw IllegalArgumentException("Unsupported language: $language")
         }
-    }
 
-    @Transactional
-    fun setRate(userId: Long, rate: Short): Session {
-        return sessionRepository.findLastSessionByUserId(userId)?.run {
-            if (status != SessionStatus.BUSY) throw SessionClosedException()
-            this.rate=rate
-            sessionRepository.save(this)
-        }?: throw SessionNotFoundExistException()
+        targetQueue.compute(id) { _, existingMessages ->
+            val messagesList = existingMessages ?: CopyOnWriteArrayList()
+            messagesList.add(message)
+            messagesList
+        }
     }
 
 

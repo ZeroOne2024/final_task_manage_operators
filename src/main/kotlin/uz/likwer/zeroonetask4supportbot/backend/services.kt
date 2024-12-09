@@ -21,6 +21,7 @@ interface UserService {
 
 interface SessionService {
     fun getSession(userId: Long): Session
+    fun getOperatorSession(operatorId: Long): Session
     fun setBusy(sessionId:Long,operatorId: Long): Session
     fun getAllSession(pageable: Pageable): Page<SessionInfo>
     fun getOne(id:Long): SessionInfo
@@ -113,6 +114,12 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
         } ?: userRepository.findByIdAndDeletedFalse(userId)
             ?.let { sessionRepository.save(Session(it)) }
         ?: throw UserNotFoundException()
+    }
+    override fun getOperatorSession(operatorId: Long): Session {
+        return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
+            if (status == SessionStatus.CLOSED) throw SessionClosedException()
+            this
+        }?:throw SessionNotFoundExistException()
     }
 
 

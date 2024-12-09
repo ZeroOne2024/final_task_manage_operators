@@ -22,11 +22,11 @@ class DataLoader(
     }
 
 
-    // Maps for each language message queue
-
-    val queueEn = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
-    val queueUz = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
-    val queueRu = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+    companion object {
+        val queueEn = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+        val queueUz = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+        val queueRu = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+    }
 
 
 }
