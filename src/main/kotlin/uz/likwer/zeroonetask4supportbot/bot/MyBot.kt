@@ -51,6 +51,8 @@ class MyBot(
 
                 bot.execute(SendChatAction(chatId, ChatAction.typing))
 
+
+
                 if (message.text() != null) {
                     val text = message.text()
 
@@ -62,114 +64,114 @@ class MyBot(
                             userRepository.save(user)
                         }
                     }
-                } else if (message.contact() != null) {
-                    val contact = message.contact()
-                    val phoneNumber = contact.phoneNumber().clearPhone()
-
-                    //TODO
-                    if (user.state == UserState.SEND_PHONE_NUMBER) {
-                        user.phoneNumber = phoneNumber
-                        bot.execute(SendMessage(chatId, "Send your full name"))
-                        user.state = UserState.SEND_FULL_NAME
-                        userRepository.save(user)
-
-                    } else if (user.state == UserState.TALKING) {
-                        botService.sendContactToOperator(user, contact, phoneNumber)
-                        contactRepository
-                    }
-                } else if (message.voice() != null) {
-                    val voice = message.voice()
-                    val fileId = voice.fileId()
-
-
-                   //TODO
-//                    if (user.state == UserState.TALKING) {
+//                } else if (message.contact() != null) {
+//                    val contact = message.contact()
+//                    val phoneNumber = contact.phoneNumber().clearPhone()
+//
+//                    //TODO
+//                    if (user.state == UserState.SEND_PHONE_NUMBER) {
+//                        user.phoneNumber = phoneNumber
+//                        bot.execute(SendMessage(chatId, "Send your full name"))
+//                        user.state = UserState.SEND_FULL_NAME
+//                        userRepository.save(user)
+//
+//                    } else if (user.state == UserState.TALKING) {
+//                        botService.sendContactToOperator(user, contact, phoneNumber)
+//                        contactRepository
+//                    }
+//                } else if (message.voice() != null) {
+//                    val voice = message.voice()
+//                    val fileId = voice.fileId()
+//
+//
+//                   //TODO
+////                    if (user.state == UserState.TALKING) {
 //                        botService.sendVoiceToOperator(user, voice)
-//                    }else if(user.state == UserStatus.ACTIVE){  }
-
-                } else if (message.audio() != null) {
-                    val audio = message.audio()
-                    val fileId = audio.fileId
-
-                    //TODO
-//                    if (user.status == UserStatus.BUSY) {
-//                        botService.sendAudioToOperator(user, audio)
-//                    }
-                } else if (message.photo() != null) {
-                    val photos = message.photo()
-
-                    photos.sortByDescending { it.fileSize() }
-                    val photo = photos[photos.size / 4]
-                    val fileId = photo.fileId()
-
-//                    if (user.status == UserStatus.BUSY) {
-//                        if (message.caption() != null) {
-//                            botService.sendPhotoWithCaptionToOperator(user, photo, message.caption())
-//                        } else {
-//                            botService.sendPhotoToOperator(user, photo)
-//                        }
-//                    }
-                } else if (message.video() != null) {
-                    val video = message.video()
-                    val fileId = video.fileId()
-
-                    //TODO if (user is busy) send to operator
-                    bot.execute(SendVideo(chatId, video.fileId()))
-                } else if (message.animation() != null) {
-                    val animation = message.animation()
-                    val fileId = animation.fileId()
-
-                    //TODO if (user is busy) send to operator
-                    bot.execute(SendAnimation(chatId, fileId))
-                } else if (message.sticker() != null) {
-                    val sticker = message.sticker()
-                    val fileId = sticker.fileId()
-
-                    //TODO if (user is busy) send to operator
-                    bot.execute(SendSticker(chatId, fileId))
-                } else if (message.audio() != null) {
-                    val audio = message.audio()
-                    val fileId = audio.fileId
-
-                    //TODO if (user is busy) send to operator
-                    bot.execute(SendAudio(chatId, fileId))
-                } else if (message.voice() != null) {
-                    val voice = message.voice()
-                    val fileId = voice.fileId()
-
-                    //TODO if (user is busy) send to operator
-                    bot.execute(SendVoice(chatId, fileId))
-                } else if (message.document() != null) {
-                    val document = message.document()
-                    val fileId = document.fileId()
-
-                    //TODO if (user is busy) send to operator
-                    bot.execute(SendDocument(chatId, document.fileId()))
-                } else if (message.dice() != null) {
-                    val dice = message.dice()
-                    val emoji = dice.emoji()
-
-                    //TODO if (user is busy) send to operator
-                    bot.execute(SendMessage(chatId, emoji))
-                } else if (message.location() != null) {
-                    val location = message.location()
-                    val lon = location.longitude()
-                    val lat = location.latitude()
-
-                    //TODO if (user is busy) send to operator
-                    bot.execute(SendLocation(chatId, lat, lon))
-                }
-            } else if (update.callbackQuery() != null) {
-                val callbackQuery = update.callbackQuery()
-                val tgUser = callbackQuery.from()
-                val chatId = tgUser.id()
-                val data = callbackQuery.data()
-
-                if (data.startsWith("setLang")) {
-                    //TODO set user's lang
-                    val lang = data.substring("setLang".length) // lang = "RU","EN","UZ"
-
-                    botService.askPhone(chatId)
+////                    }else if(user.state == UserStatus.ACTIVE){  }
+//
+//                } else if (message.audio() != null) {
+//                    val audio = message.audio()
+//                    val fileId = audio.fileId
+//
+//                    //TODO
+////                    if (user.status == UserStatus.BUSY) {
+////                        botService.sendAudioToOperator(user, audio)
+////                    }
+//                } else if (message.photo() != null) {
+//                    val photos = message.photo()
+//
+//                    photos.sortByDescending { it.fileSize() }
+//                    val photo = photos[photos.size / 4]
+//                    val fileId = photo.fileId()
+//
+////                    if (user.status == UserStatus.BUSY) {
+////                        if (message.caption() != null) {
+////                            botService.sendPhotoWithCaptionToOperator(user, photo, message.caption())
+////                        } else {
+////                            botService.sendPhotoToOperator(user, photo)
+////                        }
+////                    }
+//                } else if (message.video() != null) {
+//                    val video = message.video()
+//                    val fileId = video.fileId()
+//
+//                    //TODO if (user is busy) send to operator
+//                    bot.execute(SendVideo(chatId, video.fileId()))
+//                } else if (message.animation() != null) {
+//                    val animation = message.animation()
+//                    val fileId = animation.fileId()
+//
+//                    //TODO if (user is busy) send to operator
+//                    bot.execute(SendAnimation(chatId, fileId))
+//                } else if (message.sticker() != null) {
+//                    val sticker = message.sticker()
+//                    val fileId = sticker.fileId()
+//
+//                    //TODO if (user is busy) send to operator
+//                    bot.execute(SendSticker(chatId, fileId))
+//                } else if (message.audio() != null) {
+//                    val audio = message.audio()
+//                    val fileId = audio.fileId
+//
+//                    //TODO if (user is busy) send to operator
+//                    bot.execute(SendAudio(chatId, fileId))
+//                } else if (message.voice() != null) {
+//                    val voice = message.voice()
+//                    val fileId = voice.fileId()
+//
+//                    //TODO if (user is busy) send to operator
+//                    bot.execute(SendVoice(chatId, fileId))
+//                } else if (message.document() != null) {
+//                    val document = message.document()
+//                    val fileId = document.fileId()
+//
+//                    //TODO if (user is busy) send to operator
+//                    bot.execute(SendDocument(chatId, document.fileId()))
+//                } else if (message.dice() != null) {
+//                    val dice = message.dice()
+//                    val emoji = dice.emoji()
+//
+//                    //TODO if (user is busy) send to operator
+//                    bot.execute(SendMessage(chatId, emoji))
+//                } else if (message.location() != null) {
+//                    val location = message.location()
+//                    val lon = location.longitude()
+//                    val lat = location.latitude()
+//
+//                    //TODO if (user is busy) send to operator
+//                    bot.execute(SendLocation(chatId, lat, lon))
+//                }
+//            } else if (update.callbackQuery() != null) {
+//                val callbackQuery = update.callbackQuery()
+//                val tgUser = callbackQuery.from()
+//                val chatId = tgUser.id()
+//                val data = callbackQuery.data()
+//
+//                if (data.startsWith("setLang")) {
+//                    //TODO set user's lang
+//                    val lang = data.substring("setLang".length) // lang = "RU","EN","UZ"
+//
+//                    botService.askPhone(chatId)
                 }
             }
         } catch (e: Exception) {
