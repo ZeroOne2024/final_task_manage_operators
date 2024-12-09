@@ -58,19 +58,15 @@ class BaseRepositoryImpl<T : BaseEntity>(
 
 interface UserRepository : JpaRepository<User,Long>{
     fun existsByRole(role: UserRole): Boolean
-    fun findAllByRoleAndDeletedFalse(userRole: UserRole): List<User>
+    fun findAllByRole(userRole: UserRole): List<User>
     fun findByIdAndDeletedFalse(id: Long): User?
-    fun findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(role: UserRole,status: OperatorStatus) : User?
 }
 
 interface MessageRepository : BaseRepository<Messages>{
-    fun findAllBySessionIdAndAndDeletedFalse(sessionId: Long): List<Messages>
+    fun findByUserIdAndMessageBotId(userId: Long, messageBotId: Int): Messages?
 }
 
 interface SessionRepository : BaseRepository<Session>{
-
-    fun findByUserIdAndStatus(userId: Long, status: SessionStatus): Session?
-
     @Query(
         """
     SELECT s.operator, SUM(s.rate)

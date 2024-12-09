@@ -37,7 +37,6 @@ class User(
     var languages: List<Language> = mutableListOf(),
     @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
-    @Column(nullable = true) var talkingUserId: Long? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole? = UserRole.USER,
 ) : BaseUserEntity()
 
@@ -45,7 +44,7 @@ class User(
 class Messages(
     @ManyToOne @JoinColumn(name = "user_id", nullable = false) val user: User,
     @ManyToOne @JoinColumn(name = "session_id", nullable = false) val session: Session,
-    val messageId: Int,
+    @Column(nullable = false) val messageId: Int,
     @Column(nullable = true) val messageBotId: Int? = null,
     @Column(nullable = true) val replyMessageId: Int? = null,
     @Enumerated(value = EnumType.STRING) val messageType: MessageType,

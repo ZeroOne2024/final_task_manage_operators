@@ -44,3 +44,6 @@ class SessionAlreadyBusyException : DBusinessException() {
 class SessionClosedException : DBusinessException() {
     override fun errorCode(): ErrorCode = ErrorCode.SESSION_CLOSED
 }
+class MessageNotFoundException : DBusinessException() {
+    override fun errorCode(): ErrorCode = ErrorCode.MESSAGE_NOT_FOUND
+}
