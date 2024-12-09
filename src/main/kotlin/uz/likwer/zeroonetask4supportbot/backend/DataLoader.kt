@@ -3,6 +3,7 @@ package uz.likwer.zeroonetask4supportbot.backend
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 @Component
 class DataLoader(
@@ -20,10 +21,11 @@ class DataLoader(
         }
     }
 
-    // Userlarni navbatini manage qilish uchun
 
-    var queueMapUz: MutableMap<Long, List<Messages>> = ConcurrentHashMap()
-    var queueMapRu: MutableMap<Long, List<Messages>> = ConcurrentHashMap()
-    var queueMapEn: MutableMap<Long, List<Messages>> = ConcurrentHashMap()
+    // Maps for each language message queue
+    val queueEn = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+    val queueUz = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+    val queueRu = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+
 
 }

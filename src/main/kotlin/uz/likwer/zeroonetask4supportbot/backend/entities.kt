@@ -37,15 +37,14 @@ class User(
     var languages: List<Language> = mutableListOf(),
     @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
-    @Column(nullable = true) var talkingUserId: Long? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole? = UserRole.USER,
 ) : BaseUserEntity()
 
 @Entity(name = "messages")
 class Messages(
+    @Id  @Column(nullable = false) val id: Int,
     @ManyToOne @JoinColumn(name = "user_id", nullable = false) val user: User,
     @ManyToOne @JoinColumn(name = "session_id", nullable = false) val session: Session,
-    val messageId: Int,
     @Column(nullable = true) val messageBotId: Int? = null,
     @Column(nullable = true) val replyMessageId: Int? = null,
     @Enumerated(value = EnumType.STRING) val messageType: MessageType,
@@ -54,7 +53,7 @@ class Messages(
     @Column(nullable = true) val fileId: String? = null,
     @OneToOne @JoinColumn(nullable = true) val location: Location? = null,
     @OneToOne @JoinColumn(nullable = true) val contact: Contact? = null,
-    ) : BaseEntity()
+    ) : BaseUserEntity()
 
 @Entity(name = "sessions")
 class Session(

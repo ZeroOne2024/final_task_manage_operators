@@ -16,9 +16,7 @@ import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.request.SendPhoto
 import com.pengrad.telegrambot.request.SendVoice
 import org.springframework.stereotype.Service
-import uz.likwer.zeroonetask4supportbot.backend.User
-import uz.likwer.zeroonetask4supportbot.backend.UserRepository
-import uz.likwer.zeroonetask4supportbot.backend.UserState
+import uz.likwer.zeroonetask4supportbot.backend.*
 
 
 @Service
@@ -95,4 +93,53 @@ class BotService(private val userRepository: UserRepository) {
             bot().execute(SendAudio(user.talkingUserId, audio.fileId))
         }
     }
+    fun sendMessageToUser(user: User, message: Messages) {
+
+        when (message.messageType) {
+            MessageType.TEXT -> {
+                bot().execute(SendMessage(user.id, message.text ?: ""))
+            }
+            MessageType.PHOTO -> {
+                bot().execute(
+                    SendPhoto(chatId, message.fileId ?: "").caption(message.caption ?: "")
+                )
+            }
+            MessageType.VIDEO -> {
+                bot().execute(
+                    SendVideo(chatId, message.fileId ?: "").caption(message.caption ?: "")
+                )
+            }
+            MessageType.VOICE -> {
+                bot().execute(SendVoice(chatId, message.fileId ?: ""))
+            }
+            MessageType.AUDIO -> {
+                bot().execute(SendAudio(chatId, message.fileId ?: ""))
+            }
+            MessageType.CONTACT -> {
+                val contact = message.contact
+                if (contact != null) {
+                    bot().execute(SendContact(chatId, contact.phone, contact.name))
+                }
+            }
+            MessageType.LOCATION -> {
+                val location = message.location
+                if (location != null) {
+                    bot().execute(SendLocation(chatId, location.latitude, location.longitude))
+                }
+            }
+            MessageType.STICKER -> {
+                bot().execute(SendSticker(chatId, message.fileId ?: ""))
+            }
+            MessageType.ANIMATION -> {
+                bot().execute(SendAnimation(chatId, message.fileId ?: ""))
+            }
+            MessageType.DOCUMENT -> {
+                bot().execute(SendDocument(chatId, message.fileId ?: ""))
+            }
+            else -> {
+                println("Unsupported message type: ${message.messageType}")
+            }
+        }
+    }
+
 }
