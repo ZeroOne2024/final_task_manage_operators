@@ -17,9 +17,6 @@ class MyBot(
     private val bot: TelegramBot,
     private val botService: BotService,
     private val userRepository: UserRepository,
-    private val contactRepository: ContactRepository,
-    private val locationRepository: LocationRepository,
-    private val messageRepository: MessageRepository,
     private val executorService: Executor = Executors.newFixedThreadPool(20)
 ) {
 
@@ -75,7 +72,6 @@ class MyBot(
 
                     } else if (user.state == UserState.TALKING) {
                         botService.sendContactToOperator(user, contact, phoneNumber)
-                        contactRepository
                     }
                 } else if (message.voice() != null) {
                     val voice = message.voice()
