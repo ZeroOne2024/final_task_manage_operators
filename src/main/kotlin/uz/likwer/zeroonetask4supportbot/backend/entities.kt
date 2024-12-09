@@ -42,7 +42,7 @@ class User(
 
 @Entity(name = "messages")
 class Messages(
-    @Id  @Column(nullable = false) val id: Int,
+    @Id  @Column(nullable = false) val id: Long,
     @ManyToOne @JoinColumn(name = "user_id", nullable = false) val user: User,
     @ManyToOne @JoinColumn(name = "session_id", nullable = false) val session: Session,
     @Column(nullable = true) val messageBotId: Int? = null,
