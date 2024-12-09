@@ -32,6 +32,10 @@ class UnSupportedMessageType : DBusinessException() {
     override fun errorCode(): ErrorCode = ErrorCode.UN_SUPPORTED_MESSAGE_TYPE
 }
 
+class NoSessionInQueue : DBusinessException() {
+    override fun errorCode(): ErrorCode = ErrorCode.NO_SESSION_IN_QUEUE
+}
+
 class SomethingWentWrongException : DBusinessException(){
     override fun errorCode(): ErrorCode = ErrorCode.SOMETHING_WENT_WRONG
 }

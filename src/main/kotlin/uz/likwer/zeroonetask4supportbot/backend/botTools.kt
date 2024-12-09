@@ -1,5 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
+import java.util.concurrent.CopyOnWriteArrayList
+
 interface BotTools{
 
     fun isOperator(userId: Long): Boolean
@@ -8,12 +10,15 @@ interface BotTools{
 
     fun findActiveOperator(languageCode: String): User?
 
+    fun getQueuedSession(operator: User): QueueResponse
+
 }
 
 class BotToolsImpl(
     private val userRepository: UserRepository,
     private val messageRepository: MessageRepository,
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val dataLoader: DataLoader
 ) : BotTools {
 
     override fun isOperator(userId: Long): Boolean {
@@ -43,4 +48,31 @@ class BotToolsImpl(
     override fun findActiveOperator(languageCode: String): User? {
         return userRepository.findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(UserRole.OPERATOR,OperatorStatus.ACTIVE)
     }
+
+    @Synchronized
+    override fun getQueuedSession(operator: User): QueueResponse {
+        val languages = operator.languages
+        val languageToQueueMap = mapOf(
+            Language.UZ to dataLoader.queueUz,
+            Language.RU to dataLoader.queueRu,
+            Language.EN to dataLoader.queueEn
+        )
+
+        var smallestSession: Long? = null
+        var smallestQueue: Map<Long, CopyOnWriteArrayList<Messages>>? = null
+
+        for (language in languages) {
+            val queue = languageToQueueMap[language]
+            val currentSession = queue?.keys?.minOrNull()
+            if (currentSession != null && (smallestSession == null || currentSession < smallestSession)) {
+                smallestSession = currentSession
+                smallestQueue = queue
+            }
+        }
+
+        return smallestSession?.let {
+            QueueResponse(it, smallestQueue!![it]!!)
+        } ?: throw NoSessionInQueue()
+    }
+
 }
