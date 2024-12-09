@@ -16,9 +16,6 @@ interface BotTools{
 
 class BotToolsImpl(
     private val userRepository: UserRepository,
-    private val messageRepository: MessageRepository,
-    private val sessionRepository: SessionRepository,
-    private val dataLoader: DataLoader
 ) : BotTools {
 
     override fun isOperator(userId: Long): Boolean {
@@ -53,9 +50,9 @@ class BotToolsImpl(
     override fun getQueuedSession(operator: User): QueueResponse {
         val languages = operator.languages
         val languageToQueueMap = mapOf(
-            Language.UZ to dataLoader.queueUz,
-            Language.RU to dataLoader.queueRu,
-            Language.EN to dataLoader.queueEn
+            Language.UZ to DataLoader.queueUz,
+            Language.RU to DataLoader.queueRu,
+            Language.EN to DataLoader.queueEn
         )
 
         var smallestSession: Long? = null
@@ -74,5 +71,7 @@ class BotToolsImpl(
             QueueResponse(it, smallestQueue!![it]!!)
         } ?: throw NoSessionInQueue()
     }
+
+
 
 }
