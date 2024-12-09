@@ -28,6 +28,10 @@ class UserAlreadyExistException : DBusinessException() {
     override fun errorCode(): ErrorCode = ErrorCode.USER_ALREADY_EXISTS
 }
 
+class UnSupportedMessageType : DBusinessException() {
+    override fun errorCode(): ErrorCode = ErrorCode.UN_SUPPORTED_MESSAGE_TYPE
+}
+
 class SomethingWentWrongException : DBusinessException(){
     override fun errorCode(): ErrorCode = ErrorCode.SOMETHING_WENT_WRONG
 }

@@ -17,9 +17,6 @@ class MyBot(
     private val bot: TelegramBot,
     private val botService: BotService,
     private val userRepository: UserRepository,
-    private val contactRepository: ContactRepository,
-    private val locationRepository: LocationRepository,
-    private val messageRepository: MessageRepository,
     private val executorService: Executor = Executors.newFixedThreadPool(20)
 ) {
 
@@ -51,8 +48,6 @@ class MyBot(
 
                 bot.execute(SendChatAction(chatId, ChatAction.typing))
 
-
-
                 if (message.text() != null) {
                     val text = message.text()
 
@@ -64,28 +59,27 @@ class MyBot(
                             userRepository.save(user)
                         }
                     }
-//                } else if (message.contact() != null) {
-//                    val contact = message.contact()
-//                    val phoneNumber = contact.phoneNumber().clearPhone()
-//
-//                    //TODO
-//                    if (user.state == UserState.SEND_PHONE_NUMBER) {
-//                        user.phoneNumber = phoneNumber
-//                        bot.execute(SendMessage(chatId, "Send your full name"))
-//                        user.state = UserState.SEND_FULL_NAME
-//                        userRepository.save(user)
-//
-//                    } else if (user.state == UserState.TALKING) {
-//                        botService.sendContactToOperator(user, contact, phoneNumber)
-//                        contactRepository
-//                    }
-//                } else if (message.voice() != null) {
-//                    val voice = message.voice()
-//                    val fileId = voice.fileId()
-//
-//
-//                   //TODO
-////                    if (user.state == UserState.TALKING) {
+                } else if (message.contact() != null) {
+                    val contact = message.contact()
+                    val phoneNumber = contact.phoneNumber().clearPhone()
+
+                    //TODO
+                    if (user.state == UserState.SEND_PHONE_NUMBER) {
+                        user.phoneNumber = phoneNumber
+                        bot.execute(SendMessage(chatId, "Send your full name"))
+                        user.state = UserState.SEND_FULL_NAME
+                        userRepository.save(user)
+
+                    } else if (user.state == UserState.TALKING) {
+                        botService.sendContactToOperator(user, contact, phoneNumber)
+                    }
+                } else if (message.voice() != null) {
+                    val voice = message.voice()
+                    val fileId = voice.fileId()
+
+
+                   //TODO
+//                    if (user.state == UserState.TALKING) {
 //                        botService.sendVoiceToOperator(user, voice)
 ////                    }else if(user.state == UserStatus.ACTIVE){  }
 //

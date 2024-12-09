@@ -58,7 +58,7 @@ class UserServiceImpl(
     }
 
     override fun getAllOperators(): List<UserResponse> {
-        return  userRepository.findAllByRole(UserRole.OPERATOR).map {
+        return  userRepository.findAllByRoleAndDeletedFalse(UserRole.OPERATOR).map {
              UserResponse.toResponse(it)
         }
     }
