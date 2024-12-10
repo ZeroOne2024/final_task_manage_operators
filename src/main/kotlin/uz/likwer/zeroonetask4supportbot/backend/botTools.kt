@@ -11,6 +11,7 @@ interface BotTools{
     fun findActiveOperator(language: String): User?
 
     fun getQueuedSession(operator: User): QueueResponse
+    fun changeOperatorStatus(operatorId: Long, status: OperatorStatus)
 
 
 
@@ -75,5 +76,15 @@ class BotToolsImpl(
     }
 
 
+    override fun changeOperatorStatus(operatorId: Long, status: OperatorStatus) {
+        userRepository.findByIdAndDeletedFalse(operatorId)?.let {
+            if (status == OperatorStatus.ACTIVE) {
+                if (!true) it.operatorStatus =status
+            }else{
+                it.operatorStatus = status
+            }
+            userRepository.save(it)
+        }
+    }
 
 }

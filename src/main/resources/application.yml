@@ -1,22 +1,22 @@
 server:
-  port: 80
+  port: 1024
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/support_bot_db
+    url: jdbc:postgresql://localhost:5432/democourse
     username: postgres
-    password: Sobirov0717
+    password: 1234
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate.format_sql: true
 
 
-#app:
-#  admin:
-#    username : "admin"
-#    fullName : "Admin"
-#    phoneNumber: "+998944310717"
+app:
+  admin:
+    username : "admin"
+    fullName : "Admin"
+    phoneNumber: "+998944310717"

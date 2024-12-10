@@ -3,7 +3,7 @@ package uz.likwer.zeroonetask4supportbot.bot
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.request.*
 import com.pengrad.telegrambot.request.*
-import org.springframework.scheduling.annotation.Scheduled
+import jakarta.transaction.Transactional
 
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.backend.*
@@ -14,22 +14,19 @@ import java.util.concurrent.CopyOnWriteArrayList
 class BotService(
     private val userRepository: UserRepository,
     private val messageRepository: MessageRepository,
-    private val sessionRepository: SessionRepository,
-    private val botTools: BotTools
-    ) {
+    private val sessionRepository: SessionRepository,) {
     fun getUser(tgUser: com.pengrad.telegrambot.model.User): User {
         val userOpt = userRepository.findById(tgUser.id())
         if (userOpt.isPresent)
             return userOpt.get()
-
-            val user = User(
+        return userRepository.save(
+            User(
+                tgUser.id(),
                 tgUser.username(),
                 tgUser.firstName() + " " + tgUser.lastName(),
-                "")
-
-           user.id = tgUser.id()
-        return userRepository.save(user)
-
+                "",
+            )
+        )
     }
 
     fun bot(): TelegramBot {
@@ -97,7 +94,7 @@ class BotService(
     fun sendMessageToUser(user: User, message: Messages) {
         // Handle reply message ID, if present
         val replyMessageId = message.replyMessageId?.let {
-            messageRepository.findByUserIdAndMessageBotId(user.id!!, it)?.messageBotId
+            messageRepository.findByUserIdAndMessageBotId(user.id, it)?.messageBotId
                 ?: throw MessageNotFoundException()
         }
 
@@ -193,34 +190,52 @@ class BotService(
         }
     }
 
-
-    fun contactToNextClient(operator:User){
-
-        val queuedMessages = botTools.getQueuedSession(operator)
-        for (message in queuedMessages.messages) {
-            sendMessageToUser(operator,message)
-        }
-       val optional =sessionRepository.findById(queuedMessages.sessionId)
-        val session = optional.get()
-        session.status = SessionStatus.BUSY
-        sessionRepository.save(session)
-
-        session.user.state = UserState.TALKING
-        userRepository.save(session.user)
-
-        operator.operatorStatus = OperatorStatus.BUSY
-        userRepository.save(operator)
+    @Transactional
+    fun getSession(user: User): Session {
+        return sessionRepository.findLastSessionByUserId(user.id)?.run {
+            if (status == SessionStatus.CLOSED) {
+                user.let { sessionRepository.save(Session(it)) }
+            } else {
+                this
+            }
+        } ?: user.let { sessionRepository.save(Session(it)) }
+    }
+    fun getOperatorSession(operatorId: Long): Session {
+        return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
+            if (status == SessionStatus.CLOSED) throw SessionClosedException()
+            this
+        }?:throw SessionNotFoundExistException()
     }
 
-    @Scheduled(fixedDelay = 5_000)
-    fun findActiveOperator(){
 
-        val activeOperator = userRepository.findFirstActiveOperator(UserRole.OPERATOR,OperatorStatus.ACTIVE).orElse(null)
+    @Transactional
+    fun terminateSession(operatorId: Long): Session {
+        return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
+            status=SessionStatus.CLOSED
+            sessionRepository.save(this)
+        }?:throw SessionNotFoundExistException()
+    }
 
-        if(activeOperator != null){
-            contactToNextClient(activeOperator)
+    @Transactional
+    fun setBusy(session: Session, operator: User): Session {
+        operator.operatorStatus=OperatorStatus.BUSY
+        userRepository.save(operator)
+        return session.run {
+            if (status != SessionStatus.WAITING) throw SessionAlreadyBusyException()
+
+            status = SessionStatus.BUSY
+            this.operator = operator
+            sessionRepository.save(this)
         }
+    }
 
+    @Transactional
+    fun setRate(sessionId: Long, rate: Short): Session {
+        return sessionRepository.findByIdAndDeletedFalse(sessionId)?.run {
+            if (status != SessionStatus.BUSY) throw SessionClosedException()
+            this.rate=rate
+            sessionRepository.save(this)
+        }?: throw SessionNotFoundExistException()
     }
 
 

@@ -99,7 +99,7 @@ class MyBot(
                         contactRepository.save(Contact(it.firstName(), it.phoneNumber()))
                     }
 
-                    if (botTools.isOperator(chatId)) {
+                    if (user.operatorStatus != null) {
                         if (text != null && text.equals("/end")) {
 
                         } else {
