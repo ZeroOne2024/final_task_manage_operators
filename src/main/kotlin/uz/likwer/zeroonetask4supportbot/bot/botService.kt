@@ -175,7 +175,7 @@ class BotService(
     }
 
     @Synchronized
-    fun addMessage(id: Long, message: Messages, language: String) {
+    fun addMessageToMap(id: Long, message: Messages, language: String) {
         val targetQueue = when (language.lowercase()) {
             "en" -> DataLoader.queueEn
             "uz" -> DataLoader.queueUz
@@ -200,20 +200,21 @@ class BotService(
             }
         } ?: user.let { sessionRepository.save(Session(it)) }
     }
-    fun getOperatorSession(operatorId: Long): Session {
+
+    fun getOperatorSession(operatorId: Long): Session? {
         return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
             if (status == SessionStatus.CLOSED) throw SessionClosedException()
             this
-        }?:throw SessionNotFoundExistException()
+        }
     }
 
 
     @Transactional
-    fun terminateSession(operatorId: Long): Session {
+    fun terminateSession(operatorId: Long): Session? {
         return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
             status=SessionStatus.CLOSED
             sessionRepository.save(this)
-        }?:throw SessionNotFoundExistException()
+        }
     }
 
     @Transactional
@@ -230,13 +231,42 @@ class BotService(
     }
 
     @Transactional
-    fun setRate(sessionId: Long, rate: Short): Session {
+    fun setRate(sessionId: Long, rate: Short): Session? {
         return sessionRepository.findByIdAndDeletedFalse(sessionId)?.run {
-            if (status != SessionStatus.BUSY) throw SessionClosedException()
             this.rate=rate
             sessionRepository.save(this)
-        }?: throw SessionNotFoundExistException()
+        }
     }
+
+    @Transactional
+    @Synchronized
+    fun findMessageInMap(operator: User): Boolean {
+        val allQueues = operator.languages.mapNotNull { language ->
+            when (language) {
+                Language.EN -> DataLoader.queueEn
+                Language.UZ -> DataLoader.queueUz
+                Language.RU -> DataLoader.queueRu
+                else -> null
+            }
+        }
+
+        val minEntry = allQueues.flatMap { it.entries }
+            .minByOrNull { it.key } ?: return false
+
+        val sessionId = minEntry.key
+        val queueMap = allQueues.find { it.containsKey(sessionId) } ?: return false
+        val messages = queueMap.remove(sessionId)
+
+        messages?.forEach { message ->
+            sendMessageToUser(operator, message)
+            setBusy(message.session,operator)
+        }
+
+        return true
+    }
+
+
+
 
 
 

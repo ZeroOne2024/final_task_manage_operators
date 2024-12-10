@@ -137,20 +137,6 @@ class MyBot(
                                 contact = contact
                             )
                             val savedMessage = messageRepository.save(newMessage)
-//                            session.operator?.let {
-//                                botService.sendMessageToUser(session.operator!!, savedMessage)
-//                            } ?: {
-//                                botTools.findActiveOperator(session.user.languages[0].toString())?.let {ss->
-//                                    botService.setBusy(session, ss)
-//                                    botService.sendMessageToUser(session.operator!!, savedMessage)
-//                                } ?: {
-//                                    botService.addMessage(
-//                                        session.id!!,
-//                                        savedMessage,
-//                                        session.user.languages[0].toString()
-//                                    )
-//                                }
-//                            }
                             if (session.operator!=null) {
                                 botService.sendMessageToUser(session.operator!!, savedMessage)
                             }else{
@@ -158,7 +144,7 @@ class MyBot(
                                     botService.setBusy(session, ss)
                                     botService.sendMessageToUser(session.operator!!, savedMessage)
                                 } ?: {
-                                    botService.addMessage(
+                                    botService.addMessageToMap(
                                         session.id!!,
                                         savedMessage,
                                         session.user.languages[0].toString()
