@@ -21,14 +21,15 @@ class BotService(
         val userOpt = userRepository.findById(tgUser.id())
         if (userOpt.isPresent)
             return userOpt.get()
-        return userRepository.save(
-            User(
-                tgUser.id(),
+
+            val user = User(
                 tgUser.username(),
                 tgUser.firstName() + " " + tgUser.lastName(),
-                "",
-            )
-        )
+                "")
+
+           user.id = tgUser.id()
+        return userRepository.save(user)
+
     }
 
     fun bot(): TelegramBot {
@@ -96,7 +97,7 @@ class BotService(
     fun sendMessageToUser(user: User, message: Messages) {
         // Handle reply message ID, if present
         val replyMessageId = message.replyMessageId?.let {
-            messageRepository.findByUserIdAndMessageBotId(user.id, it)?.messageBotId
+            messageRepository.findByUserIdAndMessageBotId(user.id!!, it)?.messageBotId
                 ?: throw MessageNotFoundException()
         }
 

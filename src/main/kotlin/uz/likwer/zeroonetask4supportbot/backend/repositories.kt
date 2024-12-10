@@ -56,10 +56,9 @@ class BaseRepositoryImpl<T : BaseEntity>(
     }
 }
 
-interface UserRepository : JpaRepository<User,Long>{
+interface UserRepository : BaseRepository<User>{
     fun existsByRole(role: UserRole): Boolean
     fun findAllByRoleAndDeletedFalse(userRole: UserRole): List<User>
-    fun findByIdAndDeletedFalse(id: Long): User?
     fun findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(role: UserRole, operatorStatus: OperatorStatus): User?
 
     @Query("""

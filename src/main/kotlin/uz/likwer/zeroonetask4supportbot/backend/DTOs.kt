@@ -23,7 +23,7 @@ data class UserResponse(
     companion object{
         fun toResponse(user: User): UserResponse{
             user.run {
-                return UserResponse(id,username,fullName,phoneNumber,languages,role)
+                return UserResponse(id!!,username,fullName,phoneNumber,languages,role)
             }
         }
     }

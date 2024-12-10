@@ -138,7 +138,7 @@ class MyBot(
                             botService.sendMessageToUser(session.operator!!, savedMessage)
                         } ?: {
                             botTools.findActiveOperator(session.user.languages[0].toString())?.run {
-                                sessionService.setBusy(session.id!!, this.id)
+                                sessionService.setBusy(session.id!!, this.id!!)
                                 botService.sendMessageToUser(session.operator!!, savedMessage)
                             } ?: {
                                 botService.addMessage(

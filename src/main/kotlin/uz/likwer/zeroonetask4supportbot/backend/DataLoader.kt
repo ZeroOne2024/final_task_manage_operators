@@ -14,7 +14,7 @@ class DataLoader(
 
         if(!userRepository.existsByRole(UserRole.ADMIN)){
 
-            val admin =User(1,appProperties.username,appProperties.fullName,appProperties.phoneNumber, mutableListOf(Language.EN,Language.UZ,Language.RU),
+            val admin =User(appProperties.username,appProperties.fullName,appProperties.phoneNumber, mutableListOf(Language.EN,Language.UZ,Language.RU),
                 UserState.NEW_USER,null,UserRole.ADMIN)
 
             userRepository.save(admin)
