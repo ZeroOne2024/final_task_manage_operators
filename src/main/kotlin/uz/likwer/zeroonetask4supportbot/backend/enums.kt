@@ -13,7 +13,7 @@ enum class ErrorCode(val code: Int) {
     NO_SESSION_IN_QUEUE(108)
 }
 
-enum class UserRole{
+enum class UserRole {
 
     ADMIN,
     USER,
@@ -21,7 +21,7 @@ enum class UserRole{
 
 }
 
-enum class OperatorStatus{
+enum class OperatorStatus {
 
     ACTIVE,
     INACTIVE,
@@ -30,7 +30,7 @@ enum class OperatorStatus{
 
 }
 
-enum class Language{
+enum class Language {
 
     UZ,
     RU,
@@ -38,7 +38,7 @@ enum class Language{
 
 }
 
-enum class MessageType{
+enum class MessageType {
     TEXT,
     PHOTO,
     VIDEO,
@@ -48,23 +48,21 @@ enum class MessageType{
     AUDIO,
     ANIMATION,
     DOCUMENT,
-    GAME,
-    INVOICE,
     LOCATION,
     VOICE
 }
 
-enum class UserState{
+enum class UserState {
 
     NEW_USER,
     SEND_PHONE_NUMBER,
     SEND_FULL_NAME,
-    SEND_CHOOSE_LANG,
+    CHOOSE_LANG,
     ACTIVE_USER,
     TALKING
 }
 
-enum class SessionStatus{
+enum class SessionStatus {
 
     WAITING,
     BUSY,

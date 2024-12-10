@@ -14,3 +14,4 @@ class ZeroOneTask4supportBotApplication
 fun main(args: Array<String>) {
 	runApplication<ZeroOneTask4supportBotApplication>(*args)
 }
+

@@ -43,18 +43,21 @@ class BotService(
                     )
                 )
         )
+        user.state = UserState.CHOOSE_LANG
+        userRepository.save(user)
     }
 
-    fun askPhone(chatId: Long) {
-        //TODO send translated msg to user's lang
+    fun askPhone(user: User) {
         bot().execute(
-            SendMessage(chatId, "Click 👇 to send share your phone")
+            SendMessage(user.id, "Click 👇 to send share your phone")
                 .replyMarkup(
                     ReplyKeyboardMarkup(
                         KeyboardButton("Share phone number").requestContact(true)
                     ).resizeKeyboard(true)
                 )
         )
+        user.state = UserState.SEND_PHONE_NUMBER
+        userRepository.save(user)
     }
 
 //    fun sendPhotoWithCaptionToOperator(user: User, photo: PhotoSize, caption: String) {

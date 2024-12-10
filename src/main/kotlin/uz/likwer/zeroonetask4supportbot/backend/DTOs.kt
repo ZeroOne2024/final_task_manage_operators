@@ -9,7 +9,7 @@ data class BaseMessage(val code: Int, val message: String?)
 data class AddOperatorRequest(
     val userId: Long,
     val userRole: UserRole,
-    val languages: List<Language>
+    val languages: MutableList<Language>
 )
 
 data class UserResponse(

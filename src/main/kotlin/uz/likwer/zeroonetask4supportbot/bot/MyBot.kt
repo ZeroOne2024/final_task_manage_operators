@@ -52,32 +52,41 @@ class MyBot(
                 val chatId = tgUser.id()
 
                 bot.execute(SendChatAction(chatId, ChatAction.typing))
-                if (user.state != UserState.ACTIVE_USER){
+                if (user.state != UserState.ACTIVE_USER) {
                     if (message.text() != null) {
-                    val text = message.text()
+                        val text = message.text()
 
-                    if (text.equals("/start")) {
-                        botService.sendChooseLangMsg(user)
-                    } else {
-                        if (user.state == UserState.SEND_FULL_NAME) {
-                            user.fullName = text
+                        if (text.equals("/start")) {
+                            botService.sendChooseLangMsg(user)
+                        } else {
+                            if (user.state == UserState.SEND_FULL_NAME) {
+                                user.fullName = text
+                                user.state = UserState.ACTIVE_USER
+                                userRepository.save(user)
+
+                                bot.execute(SendMessage(chatId, "Ask your question"))
+                            }
+                        }
+                    } else if (message.contact() != null) {
+                        val contact = message.contact()
+                        val phoneNumber = contact.phoneNumber().clearPhone()
+
+                        if (user.state == UserState.SEND_PHONE_NUMBER) {
+                            user.phoneNumber = phoneNumber
+                            bot.execute(SendMessage(chatId, "Send your full name"))
+                            user.state = UserState.SEND_FULL_NAME
                             userRepository.save(user)
+
+                            if (user.state == UserState.SEND_PHONE_NUMBER) {
+                                user.phoneNumber = phoneNumber
+                                bot.execute(SendMessage(chatId, "Send your full name"))
+                                user.state = UserState.SEND_FULL_NAME
+                                userRepository.save(user)
+                            }
                         }
                     }
-                } else if (message.contact() != null) {
-                    val contact = message.contact()
-                    val phoneNumber = contact.phoneNumber().clearPhone()
+                } else {
 
-
-                    if (user.state == UserState.SEND_PHONE_NUMBER) {
-                        user.phoneNumber = phoneNumber
-                        bot.execute(SendMessage(chatId, "Send your full name"))
-                        user.state = UserState.SEND_FULL_NAME
-                        userRepository.save(user)
-
-                    }
-                }
-                }else {
                     val messageId = message.messageId()
                     val messageReplyId = message.replyToMessage()?.messageId()
                     val typeAndFileId = botTools.determineMessageType(update.message())
@@ -91,24 +100,24 @@ class MyBot(
                     }
 
                     if (botTools.isOperator(chatId)) {
-                        if(text != null && text.equals("/end")) {
+                        if (text != null && text.equals("/end")) {
 
-                        }else{
-                        val session = sessionService.getOperatorSession(chatId)
-                        val newMessage = Messages(
-                            user = session.operator!!,
-                            session = session,
-                            messageId = messageId,
-                            replyMessageId = messageReplyId,
-                            messageType = typeAndFileId.first,
-                            text = text,
-                            caption = caption,
-                            fileId = typeAndFileId.second,
-                            location = location,
-                            contact = contact
-                        )
-                        val savedMessage = messageRepository.save(newMessage)
-                        botService.sendMessageToUser(session.user, savedMessage)
+                        } else {
+                            val session = sessionService.getOperatorSession(chatId)
+                            val newMessage = Messages(
+                                user = session.operator!!,
+                                session = session,
+                                messageId = messageId,
+                                replyMessageId = messageReplyId,
+                                messageType = typeAndFileId.first,
+                                text = text,
+                                caption = caption,
+                                fileId = typeAndFileId.second,
+                                location = location,
+                                contact = contact
+                            )
+                            val savedMessage = messageRepository.save(newMessage)
+                            botService.sendMessageToUser(session.user, savedMessage)
                         }
                     } else {
                         val session = sessionService.getSession(chatId)
@@ -132,7 +141,11 @@ class MyBot(
                                 sessionService.setBusy(session.id!!, this.id)
                                 botService.sendMessageToUser(session.operator!!, savedMessage)
                             } ?: {
-                                botService.addMessage(session.id!!, savedMessage, session.user.languages[0].toString())
+                                botService.addMessage(
+                                    session.id!!,
+                                    savedMessage,
+                                    session.user.languages[0].toString()
+                                )
                             }
                         }
                     }
@@ -143,7 +156,7 @@ class MyBot(
 //                    val fileId = voice.fileId()
 
 
-                   //TODO
+                //TODO
 //                    if (user.state == UserState.TALKING) {
 //                        botService.sendVoiceToOperator(user, voice)
 ////                    }else if(user.state == UserStatus.ACTIVE){  }
@@ -232,6 +245,23 @@ class MyBot(
 //
 //                    botService.askPhone(chatId)
 
+            } else if (update.callbackQuery() != null) {
+                val callbackQuery = update.callbackQuery()
+                val tgUser = callbackQuery.from()
+                val user = botService.getUser(tgUser)
+                val chatId = tgUser.id()
+                val data = callbackQuery.data()
+
+                if (data.startsWith("setLang")) {
+                    val lang = Language.valueOf(data.substring("setLang".length).uppercase())
+                    if (!user.languages.contains(lang)) {
+                        user.languages.add(lang)
+                    }
+
+                    if (user.phoneNumber.isEmpty()) {
+                        botService.askPhone(user)
+                    }
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()

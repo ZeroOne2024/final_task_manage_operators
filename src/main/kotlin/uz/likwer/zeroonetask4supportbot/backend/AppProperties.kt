@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component
 @ConfigurationProperties(prefix = "app")
 class AppProperties {
 
-         var username: String="defaultUsername"
-         var fullName: String="defaultFullName"
-         var phoneNumber: String="defaultPhoneNumber"
+         var username: String=""
+         var fullName: String=""
+         var phoneNumber: String=""
 
 
 }

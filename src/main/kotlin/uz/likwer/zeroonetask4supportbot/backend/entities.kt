@@ -25,20 +25,52 @@ class BaseUserEntity(
     @Column(nullable = false) @ColumnDefault(value = "false") var deleted: Boolean = false
 )
 
+
+
+
+
+
+
+
+
+
+
+
+
 @Entity(name = "users")
 class User(
     @Id @Column(nullable = false) var id: Long,
     @Column(unique = true, nullable = false, length = 64) val username: String,
     @Column(nullable = false, length = 124) var fullName: String,
-    @Column(unique = true, nullable = false, length = 13) var phoneNumber: String,
-    @ElementCollection(targetClass = Language::class)
+    @Column(nullable = false, length = 13) var phoneNumber: String,
+    @ElementCollection(targetClass = Language::class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_language", joinColumns = [JoinColumn(name = "user_id")])
     @Enumerated(EnumType.STRING)
-    var languages: List<Language> = mutableListOf(),
+    var languages: MutableList<Language> = mutableListOf(),
     @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole? = UserRole.USER,
 ) : BaseUserEntity()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @Entity(name = "messages")
 class Messages(
