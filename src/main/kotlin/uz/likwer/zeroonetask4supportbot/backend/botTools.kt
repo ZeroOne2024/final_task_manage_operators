@@ -2,7 +2,8 @@ package uz.likwer.zeroonetask4supportbot.backend
 
 import org.springframework.stereotype.Service
 import java.util.concurrent.CopyOnWriteArrayList
-interface BotTools{
+
+interface BotTools {
 
     fun isOperator(userId: Long): Boolean
 
@@ -11,42 +12,50 @@ interface BotTools{
     fun findActiveOperator(language: String): User?
 
     fun getQueuedSession(operator: User): QueueResponse
-    fun changeOperatorStatus(operatorId: Long, status: OperatorStatus)
-
+    fun changeOperatorStatus(operator: User, status: OperatorStatus)
 
 
 }
+
 @Service
 class BotToolsImpl(
     private val userRepository: UserRepository,
 ) : BotTools {
 
     override fun isOperator(userId: Long): Boolean {
-       val user = userRepository.findByIdAndDeletedFalse(userId)?: throw UserNotFoundException()
-        return (user.role == UserRole.OPERATOR)
+        val user = userRepository.findById(userId)
+        if (user.isPresent) {
+            return (user.get().role == UserRole.OPERATOR)
+        }
+        return false
     }
 
     override fun determineMessageType(message: com.pengrad.telegrambot.model.Message): Pair<MessageType, String?> {
 
-            return when {
-                message.text() != null ->Pair(MessageType.TEXT,null)
-                message.photo() != null ->{
-                    val photo = message.photo().maxByOrNull { it.fileSize() ?: 0 }
-                    Pair(MessageType.PHOTO,photo?.fileId())}
-                message.voice() != null -> Pair(MessageType.VOICE, message.voice().fileId())
-                message.video() != null -> Pair(MessageType.VIDEO,message.video().fileId())
-                message.audio() != null -> Pair(MessageType.AUDIO,message.audio().fileId)
-                message.contact() != null -> Pair(MessageType.CONTACT, null)
-                message.location() != null -> Pair(MessageType.LOCATION,null)
-                message.sticker() != null -> Pair(MessageType.STICKER,message.sticker().fileId())
-                message.animation() != null -> Pair(MessageType.ANIMATION,message.animation().fileId())
-                message.document() != null -> Pair(MessageType.DOCUMENT,message.document().fileId())
-                else -> throw UnSupportedMessageType()
+        return when {
+            message.text() != null -> Pair(MessageType.TEXT, null)
+            message.photo() != null -> {
+                val photo = message.photo().maxByOrNull { it.fileSize() ?: 0 }
+                Pair(MessageType.PHOTO, photo?.fileId())
             }
+
+            message.voice() != null -> Pair(MessageType.VOICE, message.voice().fileId())
+            message.video() != null -> Pair(MessageType.VIDEO, message.video().fileId())
+            message.audio() != null -> Pair(MessageType.AUDIO, message.audio().fileId)
+            message.contact() != null -> Pair(MessageType.CONTACT, null)
+            message.location() != null -> Pair(MessageType.LOCATION, null)
+            message.sticker() != null -> Pair(MessageType.STICKER, message.sticker().fileId())
+            message.animation() != null -> Pair(MessageType.ANIMATION, message.animation().fileId())
+            message.document() != null -> Pair(MessageType.DOCUMENT, message.document().fileId())
+            else -> throw UnSupportedMessageType()
+        }
     }
 
     override fun findActiveOperator(language: String): User? {
-        return userRepository.findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(UserRole.OPERATOR,OperatorStatus.ACTIVE)
+        return userRepository.findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(
+            UserRole.OPERATOR,
+            OperatorStatus.ACTIVE
+        )
     }
 
     @Synchronized
@@ -76,15 +85,12 @@ class BotToolsImpl(
     }
 
 
-    override fun changeOperatorStatus(operatorId: Long, status: OperatorStatus) {
-        userRepository.findByIdAndDeletedFalse(operatorId)?.let {
-            if (status == OperatorStatus.ACTIVE) {
-                if (!true) it.operatorStatus =status
-            }else{
-                it.operatorStatus = status
-            }
-            userRepository.save(it)
+    override fun changeOperatorStatus(operator: User, status: OperatorStatus) {
+        if (status == OperatorStatus.ACTIVE) {
+            if (!true) operator.operatorStatus = status
+        } else {
+            operator.operatorStatus = status
         }
+        userRepository.save(operator)
     }
-
 }

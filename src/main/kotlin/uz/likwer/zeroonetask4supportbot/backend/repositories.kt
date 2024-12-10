@@ -56,18 +56,23 @@ class BaseRepositoryImpl<T : BaseEntity>(
     }
 }
 
-interface UserRepository : BaseRepository<User>{
+interface UserRepository : JpaRepository<User, Long> {
     fun existsByRole(role: UserRole): Boolean
     fun findAllByRoleAndDeletedFalse(userRole: UserRole): List<User>
-    fun findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(role: UserRole, operatorStatus: OperatorStatus): User?
+    fun findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(
+        role: UserRole,
+        operatorStatus: OperatorStatus
+    ): User?
 
-    @Query("""
+    @Query(
+        """
         SELECT u
         FROM users u
         WHERE u.role = :role
           AND u.operatorStatus = :status
         ORDER BY u.modifiedDate ASC
-    """)
+    """
+    )
     fun findFirstActiveOperator(
         @Param("role") role: UserRole,
         @Param("status") status: OperatorStatus
@@ -76,13 +81,13 @@ interface UserRepository : BaseRepository<User>{
 
 }
 
-interface MessageRepository : BaseRepository<Messages>{
+interface MessageRepository : BaseRepository<Messages> {
     fun findByUserIdAndMessageBotId(userId: Long, messageBotId: Int): Messages?
     fun findAllBySessionId(sessionId: Long): List<Messages>
-    fun findAllByUserId(userId: Long) : List<Messages>
+    fun findAllByUserId(userId: Long): List<Messages>
 }
 
-interface SessionRepository : BaseRepository<Session>{
+interface SessionRepository : BaseRepository<Session> {
     @Query(
         """
     SELECT s.operator, SUM(s.rate)
@@ -98,6 +103,7 @@ interface SessionRepository : BaseRepository<Session>{
         @Param("toDate") toDate: Date,
         pageable: Pageable
     ): Page<Array<Any>>
+
     @Query(
         """
     SELECT s.operator, SUM(s.rate)
@@ -113,6 +119,7 @@ interface SessionRepository : BaseRepository<Session>{
         @Param("toDate") toDate: Date,
         pageable: Pageable
     ): Page<Array<Any>>
+
     @Query(
         """
     SELECT s.operator, s.rate
@@ -125,6 +132,7 @@ interface SessionRepository : BaseRepository<Session>{
         @Param("operatorId") operatorId: Long,
         pageable: Pageable
     ): Page<Array<Any>>
+
     @Query(
         """
     SELECT s
@@ -139,6 +147,7 @@ interface SessionRepository : BaseRepository<Session>{
         @Param("toDate") toDate: Date,
         pageable: Pageable
     ): Page<Session>
+
     @Query(
         """
     SELECT s
@@ -155,7 +164,6 @@ interface SessionRepository : BaseRepository<Session>{
     ): Page<Session>
 
 
-
     @Query(
         """
     SELECT s.operator,sum(s.rate)
@@ -166,6 +174,7 @@ interface SessionRepository : BaseRepository<Session>{
     """
     )
     fun findHighestRatedOperators(pageable: Pageable): Page<Array<Any>>
+
     @Query(
         """
     SELECT s.operator,sum(s.rate)
@@ -176,22 +185,25 @@ interface SessionRepository : BaseRepository<Session>{
     """
     )
     fun findLowestRatedOperators(pageable: Pageable): Page<Array<Any>>
+
     @Query(
         "SELECT s FROM sessions s " +
                 "WHERE s.user.id = :userId " +
                 "ORDER BY s.createdDate DESC"
     )
     fun findLastSessionByUserId(@Param("userId") userId: Long): Session?
+
     @Query(
         "SELECT s FROM sessions s " +
                 "WHERE s.operator.id = :operatorId " +
                 "ORDER BY s.createdDate DESC"
     )
     fun findLastSessionByOperatorId(@Param("operatorId") operatorId: Long): Session?
-    fun getSessionByUserId(userId: Long,pageable: Pageable): Page<Session>
-    fun getSessionByOperatorId(operatorId: Long,pageable: Pageable): Page<Session>
+    fun getSessionByUserId(userId: Long, pageable: Pageable): Page<Session>
+    fun getSessionByOperatorId(operatorId: Long, pageable: Pageable): Page<Session>
     fun getSessionByStatus(status: SessionStatus, pageable: Pageable): Page<Session>
 
 }
+
 interface LocationRepository : BaseRepository<Location>
 interface ContactRepository : BaseRepository<Contact>
