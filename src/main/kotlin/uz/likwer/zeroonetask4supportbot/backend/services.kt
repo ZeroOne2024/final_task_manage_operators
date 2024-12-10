@@ -16,9 +16,9 @@ interface UserService {
 }
 
 interface SessionService {
-    fun getSession(userId: Long): Session?
+//    fun getSession(userId: Long): Session?
     fun getOperatorSession(operatorId: Long): Session?
-    fun setBusy(sessionId: Long, operatorId: Long): Session
+//    fun setBusy(sessionId: Long, operatorId: Long): Session
     fun getAllSession(pageable: Pageable): Page<SessionInfo>
     fun getOne(id: Long): SessionInfo
     fun terminateSession(operatorId: Long): Session?
@@ -76,7 +76,6 @@ class UserServiceImpl(
     }
 
     override fun deleteUser(userId: Long) {
-
         val optional = userRepository.findById(userId)
         if (optional.isEmpty) throw UserNotFoundException()
         val user = optional.get()
@@ -101,18 +100,20 @@ class SessionServiceImpl(
         return toSessionInfo(session)
     }
 
-    @Transactional
-    override fun getSession(userId: Long): Session? {
-        return sessionRepository.findLastSessionByUserId(userId)?.run {
-            if (status == SessionStatus.CLOSED) {
-                userRepository.findByIdAndDeletedFalse(userId)
-                    ?.let { sessionRepository.save(Session(it)) }
-            } else {
-                this
-            }
-        } ?: userRepository.findByIdAndDeletedFalse(userId)
-            ?.let { sessionRepository.save(Session(it)) }
-    }
+//    @Transactional
+//    override fun getSession(userId: Long): Session? {
+//        return sessionRepository.findLastSessionByUserId(userId)?.run {
+//            if (status == SessionStatus.CLOSED) {
+//                val userOpt = userRepository.findById(userId)
+//                if (userOpt.isPresent) {
+//                    sessionRepository.save(Session(userOpt.get()))
+//                }
+//            } else {
+//                this
+//            }
+//        } ?: userRepository.findById(userId)
+//            .let { sessionRepository.save(Session(it)) }
+//    }
 
     override fun getOperatorSession(operatorId: Long): Session? {
         return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
@@ -131,22 +132,22 @@ class SessionServiceImpl(
         }
     }
 
-    @Transactional
-    override fun setBusy(sessionId: Long, operatorId: Long): Session {
-        val session = sessionRepository.findById(sessionId)
-            .orElseThrow { SessionNotFoundExistException() }
-
-        val setOperator = userRepository.findByIdAndDeletedFalse(operatorId) ?: throw UserNotFoundException()
-        setOperator.operatorStatus = OperatorStatus.BUSY
-        userRepository.save(setOperator)
-        return session.run {
-            if (status != SessionStatus.WAITING) throw SessionAlreadyBusyException()
-
-            status = SessionStatus.BUSY
-            operator = setOperator
-            sessionRepository.save(this)
-        }
-    }
+//    @Transactional
+//    override fun setBusy(sessionId: Long, operatorId: Long): Session {
+//        val session = sessionRepository.findById(sessionId)
+//            .orElseThrow { SessionNotFoundExistException() }
+//
+//        val setOperator = userRepository.findByIdAndDeletedFalse(operatorId) ?: throw UserNotFoundException()
+//        setOperator.operatorStatus = OperatorStatus.BUSY
+//        userRepository.save(setOperator)
+//        return session.run {
+//            if (status != SessionStatus.WAITING) throw SessionAlreadyBusyException()
+//
+//            status = SessionStatus.BUSY
+//            operator = setOperator
+//            sessionRepository.save(this)
+//        }
+//    }
 
     @Transactional
     override fun setRate(userId: Long, rate: Short): Session {
