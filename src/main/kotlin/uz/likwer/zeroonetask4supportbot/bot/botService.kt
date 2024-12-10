@@ -3,6 +3,7 @@ package uz.likwer.zeroonetask4supportbot.bot
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.request.*
 import com.pengrad.telegrambot.request.*
+import org.springframework.scheduling.annotation.Scheduled
 
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.backend.*
@@ -13,7 +14,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 class BotService(
     private val userRepository: UserRepository,
     private val messageRepository: MessageRepository,
-    private val sessionRepository: SessionRepository,) {
+    private val sessionRepository: SessionRepository,
+    private val botTools: BotTools
+    ) {
     fun getUser(tgUser: com.pengrad.telegrambot.model.User): User {
         val userOpt = userRepository.findById(tgUser.id())
         if (userOpt.isPresent)
@@ -187,6 +190,36 @@ class BotService(
             messagesList.add(message)
             messagesList
         }
+    }
+
+
+    fun contactToNextClient(operator:User){
+
+        val queuedMessages = botTools.getQueuedSession(operator)
+        for (message in queuedMessages.messages) {
+            sendMessageToUser(operator,message)
+        }
+       val optional =sessionRepository.findById(queuedMessages.sessionId)
+        val session = optional.get()
+        session.status = SessionStatus.BUSY
+        sessionRepository.save(session)
+
+        session.user.state = UserState.TALKING
+        userRepository.save(session.user)
+
+        operator.operatorStatus = OperatorStatus.BUSY
+        userRepository.save(operator)
+    }
+
+    @Scheduled(fixedDelay = 5_000)
+    fun findActiveOperator(){
+
+        val activeOperator = userRepository.findFirstActiveOperator(UserRole.OPERATOR,OperatorStatus.ACTIVE).orElse(null)
+
+        if(activeOperator != null){
+            contactToNextClient(activeOperator)
+        }
+
     }
 
 

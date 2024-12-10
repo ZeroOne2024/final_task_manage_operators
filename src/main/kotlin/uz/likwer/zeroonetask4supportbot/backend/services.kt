@@ -9,13 +9,9 @@ import org.springframework.stereotype.Service
 interface UserService {
 
     fun addOperator(request: AddOperatorRequest ) : UserResponse
-
     fun getAllOperators() : List<UserResponse>
-
     fun getAllUsers() : List<UserResponse>
-
     fun deleteOperator(operatorId: Long) : UserResponse
-
     fun deleteUser(userId: Long)
 }
 
@@ -46,7 +42,7 @@ class UserServiceImpl(
     override fun addOperator(request: AddOperatorRequest): UserResponse {
 
         request.run {
-            var user : User
+            val user : User
             val optional = userRepository.findById(userId)
             if(optional.isEmpty) throw UserNotFoundException()
             user = optional.get()

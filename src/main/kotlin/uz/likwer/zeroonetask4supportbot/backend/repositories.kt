@@ -62,10 +62,25 @@ interface UserRepository : JpaRepository<User,Long>{
     fun findByIdAndDeletedFalse(id: Long): User?
     fun findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(role: UserRole, operatorStatus: OperatorStatus): User?
 
+    @Query("""
+        SELECT u
+        FROM users u
+        WHERE u.role = :role
+          AND u.operatorStatus = :status
+        ORDER BY u.modifiedDate ASC
+    """)
+    fun findFirstActiveOperator(
+        @Param("role") role: UserRole,
+        @Param("status") status: OperatorStatus
+    ): Optional<User>
+
+
 }
 
 interface MessageRepository : BaseRepository<Messages>{
     fun findByUserIdAndMessageBotId(userId: Long, messageBotId: Int): Messages?
+    fun findAllBySessionId(sessionId: Long): List<Messages>
+    fun findAllByUserId(userId: Long) : List<Messages>
 }
 
 interface SessionRepository : BaseRepository<Session>{

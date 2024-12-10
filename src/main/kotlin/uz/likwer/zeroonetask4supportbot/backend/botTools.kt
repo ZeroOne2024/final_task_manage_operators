@@ -8,7 +8,7 @@ interface BotTools{
 
     fun determineMessageType(message: com.pengrad.telegrambot.model.Message): Pair<MessageType, String?>
 
-    fun findActiveOperator(languageCode: String): User?
+    fun findActiveOperator(language: String): User?
 
     fun getQueuedSession(operator: User): QueueResponse
 
@@ -44,7 +44,7 @@ class BotToolsImpl(
             }
     }
 
-    override fun findActiveOperator(languageCode: String): User? {
+    override fun findActiveOperator(language: String): User? {
         return userRepository.findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(UserRole.OPERATOR,OperatorStatus.ACTIVE)
     }
 

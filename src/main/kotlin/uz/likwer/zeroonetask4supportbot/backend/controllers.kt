@@ -1,6 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
 import org.springframework.context.support.ResourceBundleMessageSource
+import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -17,7 +18,8 @@ class ExceptionHandler(private val errorMessageSource: ResourceBundleMessageSour
 @RestController
 @RequestMapping("api/v1/private/manage-users")
 class PrivateUserController(
-    private val userService: UserService
+    private val userService: UserService,
+    private val sessionService: SessionService
 ){
 
     @PutMapping("add-operator")
@@ -34,5 +36,12 @@ class PrivateUserController(
 
     @DeleteMapping("delete-user/{userId}")
     fun deleteUser(@PathVariable userId: Long) = userService.deleteUser(userId)
+
+    @GetMapping("get-sessions-of-user/{userId}")
+    fun getAllSessionUser(@PathVariable userId: Long, pageable: Pageable ) = sessionService.getAllSessionUser(userId,pageable)
+
+    @GetMapping("get-sessions-of-operator/{operatorId}")
+    fun getAllSessionOperator(@PathVariable operatorId: Long, pageable: Pageable ) = sessionService.getAllSessionUser(operatorId,pageable)
+
 
 }
