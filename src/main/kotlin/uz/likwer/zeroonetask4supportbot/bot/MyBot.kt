@@ -122,11 +122,11 @@ class MyBot(
                             }
                         }
                     } else {
-                        val sessionOpt = botService.getSession(user)
-                        sessionOpt.let{session->
+                        val session = sessionService.getSession(chatId)
+                        session?.let{
                             val newMessage = Messages(
-                                user = session.user,
-                                session = session,
+                                user = it.user,
+                                session = it,
                                 messageId = messageId,
                                 replyMessageId = messageReplyId,
                                 messageType = typeAndFileId.first,
@@ -137,31 +137,17 @@ class MyBot(
                                 contact = contact
                             )
                             val savedMessage = messageRepository.save(newMessage)
-//                            session.operator?.let {
-//                                botService.sendMessageToUser(session.operator!!, savedMessage)
-//                            } ?: {
-//                                botTools.findActiveOperator(session.user.languages[0].toString())?.let {ss->
-//                                    botService.setBusy(session, ss)
-//                                    botService.sendMessageToUser(session.operator!!, savedMessage)
-//                                } ?: {
-//                                    botService.addMessage(
-//                                        session.id!!,
-//                                        savedMessage,
-//                                        session.user.languages[0].toString()
-//                                    )
-//                                }
-//                            }
-                            if (session.operator!=null) {
-                                botService.sendMessageToUser(session.operator!!, savedMessage)
-                            }else{
-                                botTools.findActiveOperator(session.user.languages[0].toString())?.let {ss->
-                                    botService.setBusy(session, ss)
-                                    botService.sendMessageToUser(session.operator!!, savedMessage)
+                            it.operator?.run {
+                                botService.sendMessageToUser(it.operator!!, savedMessage)
+                            } ?: {
+                                botTools.findActiveOperator(it.user.languages[0].toString())?.run {
+                                    sessionService.setBusy(it.id!!, this.id!!)
+                                    botService.sendMessageToUser(it.operator!!, savedMessage)
                                 } ?: {
                                     botService.addMessage(
-                                        session.id!!,
+                                        it.id!!,
                                         savedMessage,
-                                        session.user.languages[0].toString()
+                                        it.user.languages[0].toString()
                                     )
                                 }
                             }

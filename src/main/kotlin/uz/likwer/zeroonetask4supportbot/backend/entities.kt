@@ -16,17 +16,10 @@ class BaseEntity(
     @LastModifiedDate @Temporal(TemporalType.TIMESTAMP) var modifiedDate: Date? = null,
     @Column(nullable = false) @ColumnDefault(value = "false") var deleted: Boolean = false
 )
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener::class)
-class BaseUserEntity(
-    @CreatedDate @Temporal(TemporalType.TIMESTAMP) var createdDate: Date? = null,
-    @LastModifiedDate @Temporal(TemporalType.TIMESTAMP) var modifiedDate: Date? = null,
-    @Column(nullable = false) @ColumnDefault(value = "false") var deleted: Boolean = false
-)
 
 @Entity(name = "users")
 class User(
-    @Id @Column(nullable = false) var id: Long,
+//    @Id @Column(nullable = false) var id: Long,
     @Column(unique = true, nullable = false, length = 64) val username: String,
     @Column(nullable = false, length = 124) var fullName: String,
     @Column(nullable = false, length = 13) var phoneNumber: String,
@@ -37,7 +30,7 @@ class User(
     @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole? = UserRole.USER,
-) : BaseUserEntity()
+) : BaseEntity()
 
 
 @Entity(name = "messages")
