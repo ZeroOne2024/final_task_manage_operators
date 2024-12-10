@@ -10,7 +10,10 @@ import uz.likwer.zeroonetask4supportbot.backend.BaseRepositoryImpl
 @EnableJpaAuditing
 @EnableScheduling
 @SpringBootApplication
-@EnableJpaRepositories(repositoryBaseClass = BaseRepositoryImpl::class)
+@EnableJpaRepositories(
+	basePackages = ["uz.likwer.zeroonetask4supportbot.backend"],
+	repositoryBaseClass = BaseRepositoryImpl::class)
+
 class ZeroOneTask4supportBotApplication
 
 fun main(args: Array<String>) {

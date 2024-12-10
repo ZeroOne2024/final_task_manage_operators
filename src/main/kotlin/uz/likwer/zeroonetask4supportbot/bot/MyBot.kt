@@ -99,11 +99,11 @@ class MyBot(
                         contactRepository.save(Contact(it.firstName(), it.phoneNumber()))
                     }
 
-                    if (botTools.isOperator(chatId)) {
+                    if (user.operatorStatus != null) {
                         if (text != null && text.equals("/end")) {
 
                         } else {
-                            val session = sessionService.getOperatorSession(chatId)
+                            val session = botService.getOperatorSession(chatId)
                             val newMessage = Messages(
                                 user = session.operator!!,
                                 session = session,
@@ -120,7 +120,7 @@ class MyBot(
                             botService.sendMessageToUser(session.user, savedMessage)
                         }
                     } else {
-                        val session = sessionService.getSession(chatId)
+                        val session = botService.getSession(user)
                         val newMessage = Messages(
                             user = session.user,
                             session = session,
@@ -138,7 +138,8 @@ class MyBot(
                             botService.sendMessageToUser(session.operator!!, savedMessage)
                         } ?: {
                             botTools.findActiveOperator(session.user.languages[0].toString())?.run {
-                                sessionService.setBusy(session.id!!, this.id!!)
+                                botService.setBusy(session, this)
+                                println(this.toString()+"worked")
                                 botService.sendMessageToUser(session.operator!!, savedMessage)
                             } ?: {
                                 botService.addMessage(
