@@ -8,31 +8,31 @@ import org.springframework.stereotype.Service
 
 interface UserService {
 
-    fun addOperator(request: AddOperatorRequest ) : UserResponse
-    fun getAllOperators() : List<UserResponse>
-    fun getAllUsers() : List<UserResponse>
-    fun deleteOperator(operatorId: Long) : UserResponse
+    fun addOperator(request: AddOperatorRequest): UserResponse
+    fun getAllOperators(): List<UserResponse>
+    fun getAllUsers(): List<UserResponse>
+    fun deleteOperator(operatorId: Long): UserResponse
     fun deleteUser(userId: Long)
 }
 
 interface SessionService {
-    fun getSession(userId: Long): Session
-    fun getOperatorSession(operatorId: Long): Session
-    fun setBusy(sessionId:Long,operatorId: Long): Session
+    fun getSession(userId: Long): Session?
+    fun getOperatorSession(operatorId: Long): Session?
+    fun setBusy(sessionId: Long, operatorId: Long): Session
     fun getAllSession(pageable: Pageable): Page<SessionInfo>
-    fun getOne(id:Long): SessionInfo
-    fun terminateSession(operatorId: Long):Session
-    fun setRate(userId: Long, rate:Short):Session
-    fun getAllSessionUser(userId: Long,pageable: Pageable) : Page<SessionInfo>
-    fun getAllSessionOperator(operatorId: Long, pageable: Pageable) : Page<SessionInfo>
-    fun getAllSessionUserDateRange(userId: Long,dto: DateRangeDTO, pageable: Pageable) : Page<SessionInfo>
-    fun getAllSessionOperatorDateRange(operatorId: Long,dto: DateRangeDTO, pageable: Pageable) : Page<SessionInfo>
-    fun getSessionsByStatus(status: SessionStatus, pageable: Pageable) : Page<SessionInfo>
-    fun getHighRateOperator(pageable: Pageable):Page<RateInfo>
-    fun getLowRateOperator(pageable: Pageable):Page<RateInfo>
+    fun getOne(id: Long): SessionInfo
+    fun terminateSession(operatorId: Long): Session?
+    fun setRate(userId: Long, rate: Short): Session
+    fun getAllSessionUser(userId: Long, pageable: Pageable): Page<SessionInfo>
+    fun getAllSessionOperator(operatorId: Long, pageable: Pageable): Page<SessionInfo>
+    fun getAllSessionUserDateRange(userId: Long, dto: DateRangeDTO, pageable: Pageable): Page<SessionInfo>
+    fun getAllSessionOperatorDateRange(operatorId: Long, dto: DateRangeDTO, pageable: Pageable): Page<SessionInfo>
+    fun getSessionsByStatus(status: SessionStatus, pageable: Pageable): Page<SessionInfo>
+    fun getHighRateOperator(pageable: Pageable): Page<RateInfo>
+    fun getLowRateOperator(pageable: Pageable): Page<RateInfo>
     fun getHighRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo>
     fun getLowRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo>
-    fun getOperatorRate(operatorId: Long,pageable: Pageable): Page<RateInfo>
+    fun getOperatorRate(operatorId: Long, pageable: Pageable): Page<RateInfo>
 }
 
 @Service
@@ -42,9 +42,9 @@ class UserServiceImpl(
     override fun addOperator(request: AddOperatorRequest): UserResponse {
 
         request.run {
-            val user : User
+            val user: User
             val optional = userRepository.findById(userId)
-            if(optional.isEmpty) throw UserNotFoundException()
+            if (optional.isEmpty) throw UserNotFoundException()
             user = optional.get()
             userRole.let { user.role = it }
             languages.let { user.languages = it }
@@ -55,8 +55,8 @@ class UserServiceImpl(
     }
 
     override fun getAllOperators(): List<UserResponse> {
-        return  userRepository.findAllByRoleAndDeletedFalse(UserRole.OPERATOR).map {
-             UserResponse.toResponse(it)
+        return userRepository.findAllByRoleAndDeletedFalse(UserRole.OPERATOR).map {
+            UserResponse.toResponse(it)
         }
     }
 
@@ -69,15 +69,16 @@ class UserServiceImpl(
     override fun deleteOperator(operatorId: Long): UserResponse {
 
         val optional = userRepository.findById(operatorId)
-        if(optional.isEmpty) throw UserNotFoundException()
+        if (optional.isEmpty) throw UserNotFoundException()
         val user = optional.get()
         user.role = UserRole.USER
         return UserResponse.toResponse(userRepository.save(user))
     }
+
     override fun deleteUser(userId: Long) {
 
         val optional = userRepository.findById(userId)
-        if(optional.isEmpty) throw UserNotFoundException()
+        if (optional.isEmpty) throw UserNotFoundException()
         val user = optional.get()
         user.deleted = true
         userRepository.save(user)
@@ -85,8 +86,10 @@ class UserServiceImpl(
 }
 
 @Service
-class SessionServiceImpl(private val sessionRepository:SessionRepository,
-    private val userRepository: UserRepository):SessionService {
+class SessionServiceImpl(
+    private val sessionRepository: SessionRepository,
+    private val userRepository: UserRepository
+) : SessionService {
 
     override fun getAllSession(pageable: Pageable): Page<SessionInfo> {
         return toSessionInfo(sessionRepository.findAll(pageable))
@@ -97,34 +100,35 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
             .orElseThrow { SessionNotFoundExistException() }
         return toSessionInfo(session)
     }
+
     @Transactional
-    override fun getSession(userId: Long): Session {
+    override fun getSession(userId: Long): Session? {
         return sessionRepository.findLastSessionByUserId(userId)?.run {
             if (status == SessionStatus.CLOSED) {
                 userRepository.findByIdAndDeletedFalse(userId)
                     ?.let { sessionRepository.save(Session(it)) }
-                    ?: throw UserNotFoundException()
             } else {
                 this
             }
         } ?: userRepository.findByIdAndDeletedFalse(userId)
             ?.let { sessionRepository.save(Session(it)) }
-        ?: throw UserNotFoundException()
     }
-    override fun getOperatorSession(operatorId: Long): Session {
+
+    override fun getOperatorSession(operatorId: Long): Session? {
         return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
-            if (status == SessionStatus.CLOSED) throw SessionClosedException()
+            if (status == SessionStatus.CLOSED)
+                return null
             this
-        }?:throw SessionNotFoundExistException()
+        }
     }
 
 
     @Transactional
-    override fun terminateSession(operatorId: Long): Session {
+    override fun terminateSession(operatorId: Long): Session? {
         return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
-            status=SessionStatus.CLOSED
+            status = SessionStatus.CLOSED
             sessionRepository.save(this)
-        }?:throw SessionNotFoundExistException()
+        }
     }
 
     @Transactional
@@ -132,8 +136,8 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
         val session = sessionRepository.findById(sessionId)
             .orElseThrow { SessionNotFoundExistException() }
 
-        val setOperator = userRepository.findByIdAndDeletedFalse(operatorId)?:throw UserNotFoundException()
-        setOperator.operatorStatus=OperatorStatus.BUSY
+        val setOperator = userRepository.findByIdAndDeletedFalse(operatorId) ?: throw UserNotFoundException()
+        setOperator.operatorStatus = OperatorStatus.BUSY
         userRepository.save(setOperator)
         return session.run {
             if (status != SessionStatus.WAITING) throw SessionAlreadyBusyException()
@@ -148,9 +152,9 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
     override fun setRate(userId: Long, rate: Short): Session {
         return sessionRepository.findLastSessionByUserId(userId)?.run {
             if (status != SessionStatus.BUSY) throw SessionClosedException()
-            this.rate=rate
+            this.rate = rate
             sessionRepository.save(this)
-        }?: throw SessionNotFoundExistException()
+        } ?: throw SessionNotFoundExistException()
     }
 
     override fun getAllSessionUser(userId: Long, pageable: Pageable): Page<SessionInfo> {
@@ -167,7 +171,14 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
         dto: DateRangeDTO,
         pageable: Pageable
     ): Page<SessionInfo> {
-        return toSessionInfo(sessionRepository.findAllSessionsByUserAndDateRange(userId,dto.fromDate,dto.toDate,pageable))
+        return toSessionInfo(
+            sessionRepository.findAllSessionsByUserAndDateRange(
+                userId,
+                dto.fromDate,
+                dto.toDate,
+                pageable
+            )
+        )
     }
 
     override fun getAllSessionOperatorDateRange(
@@ -175,7 +186,14 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
         dto: DateRangeDTO,
         pageable: Pageable
     ): Page<SessionInfo> {
-        return toSessionInfo(sessionRepository.findAllSessionsByOperatorAndDateRange(operatorId,dto.fromDate, dto.toDate,pageable))
+        return toSessionInfo(
+            sessionRepository.findAllSessionsByOperatorAndDateRange(
+                operatorId,
+                dto.fromDate,
+                dto.toDate,
+                pageable
+            )
+        )
     }
 
     override fun getSessionsByStatus(status: SessionStatus, pageable: Pageable): Page<SessionInfo> {
@@ -191,17 +209,18 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
     }
 
     override fun getHighRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo> {
-        return toRateInfo(sessionRepository.findHighestRatedOperatorsByDateRange(dto.fromDate,dto.toDate, pageable))
+        return toRateInfo(sessionRepository.findHighestRatedOperatorsByDateRange(dto.fromDate, dto.toDate, pageable))
     }
 
     override fun getLowRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo> {
-        return toRateInfo(sessionRepository.findLowestRatedOperatorsByDateRange(dto.fromDate,dto.toDate, pageable))
+        return toRateInfo(sessionRepository.findLowestRatedOperatorsByDateRange(dto.fromDate, dto.toDate, pageable))
 
     }
 
     override fun getOperatorRate(operatorId: Long, pageable: Pageable): Page<RateInfo> {
         return toRateInfo(sessionRepository.findOperatorRates(operatorId, pageable))
     }
+
     private fun toSessionInfo(sessions: Page<Session>): Page<SessionInfo> {
         return sessions.map { session ->
             SessionInfo(
@@ -212,6 +231,7 @@ class SessionServiceImpl(private val sessionRepository:SessionRepository,
             )
         }
     }
+
     private fun toSessionInfo(session: Session): SessionInfo {
         return SessionInfo(
             user = UserResponse.toResponse(session.user),

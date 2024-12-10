@@ -104,9 +104,29 @@ class MyBot(
 
                         } else {
                             val session = sessionService.getOperatorSession(chatId)
+                            session?.let {
+                                val newMessage = Messages(
+                                    user = session.operator!!,
+                                    session = session,
+                                    messageId = messageId,
+                                    replyMessageId = messageReplyId,
+                                    messageType = typeAndFileId.first,
+                                    text = text,
+                                    caption = caption,
+                                    fileId = typeAndFileId.second,
+                                    location = location,
+                                    contact = contact
+                                )
+                                val savedMessage = messageRepository.save(newMessage)
+                                botService.sendMessageToUser(session.user, savedMessage)
+                            }
+                        }
+                    } else {
+                        val session = sessionService.getSession(chatId)
+                        session?.let{
                             val newMessage = Messages(
-                                user = session.operator!!,
-                                session = session,
+                                user = it.user,
+                                session = it,
                                 messageId = messageId,
                                 replyMessageId = messageReplyId,
                                 messageType = typeAndFileId.first,
@@ -117,35 +137,19 @@ class MyBot(
                                 contact = contact
                             )
                             val savedMessage = messageRepository.save(newMessage)
-                            botService.sendMessageToUser(session.user, savedMessage)
-                        }
-                    } else {
-                        val session = sessionService.getSession(chatId)
-                        val newMessage = Messages(
-                            user = session.user,
-                            session = session,
-                            messageId = messageId,
-                            replyMessageId = messageReplyId,
-                            messageType = typeAndFileId.first,
-                            text = text,
-                            caption = caption,
-                            fileId = typeAndFileId.second,
-                            location = location,
-                            contact = contact
-                        )
-                        val savedMessage = messageRepository.save(newMessage)
-                        session.operator?.run {
-                            botService.sendMessageToUser(session.operator!!, savedMessage)
-                        } ?: {
-                            botTools.findActiveOperator(session.user.languages[0].toString())?.run {
-                                sessionService.setBusy(session.id!!, this.id!!)
-                                botService.sendMessageToUser(session.operator!!, savedMessage)
+                            it.operator?.run {
+                                botService.sendMessageToUser(it.operator!!, savedMessage)
                             } ?: {
-                                botService.addMessage(
-                                    session.id!!,
-                                    savedMessage,
-                                    session.user.languages[0].toString()
-                                )
+                                botTools.findActiveOperator(it.user.languages[0].toString())?.run {
+                                    sessionService.setBusy(it.id!!, this.id!!)
+                                    botService.sendMessageToUser(it.operator!!, savedMessage)
+                                } ?: {
+                                    botService.addMessage(
+                                        it.id!!,
+                                        savedMessage,
+                                        it.user.languages[0].toString()
+                                    )
+                                }
                             }
                         }
                     }
