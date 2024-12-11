@@ -162,34 +162,12 @@ class MyBot(
                             if (session.operator != null) {
                                 botService.sendMessageToUser(session.operator!!, savedMessage, session)
                             } else {
-                                botTools.findActiveOperator(session.user.languages[0].toString())?.let { ss ->
-                                    bot.execute(
-                                        SendMessage(ss.id, "User: " + session.user.fullName)
-                                            .entities(
-                                                MessageEntity(
-                                                    MessageEntity.Type.text_mention,
-                                                    "User: ".length,
-                                                    session.user.fullName.length
-                                                )
-                                                    .user(User(session.user.id))
-                                            ).replyMarkup(
-                                                ReplyKeyboardMarkup(
-                                                    KeyboardButton("Stop chat ❌"),
-                                                    KeyboardButton("Next user ➡️"),
-                                                    KeyboardButton("Short break ▶️"),
-//                                                    KeyboardButton("To another operator 📁")
-                                                ).resizeKeyboard(true)
-                                            )
-                                    )
-                                    botService.setBusy(session, ss)
-                                    botService.sendMessageToUser(session.operator!!, savedMessage, session)
-                                } ?: {
                                     botService.addMessageToMap(
                                         session.id!!,
                                         savedMessage,
                                         session.user.languages[0].toString()
                                     )
-                                }
+
                             }
                         }
                     }

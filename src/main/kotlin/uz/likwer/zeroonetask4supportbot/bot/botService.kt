@@ -1,9 +1,11 @@
 package uz.likwer.zeroonetask4supportbot.bot
 
 import com.pengrad.telegrambot.TelegramBot
+import com.pengrad.telegrambot.model.MessageEntity
 import com.pengrad.telegrambot.model.request.*
 import com.pengrad.telegrambot.request.*
 import jakarta.transaction.Transactional
+import org.springframework.scheduling.annotation.Scheduled
 
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.backend.*
@@ -15,6 +17,7 @@ class BotService(
     private val userRepository: UserRepository,
     private val messageRepository: MessageRepository,
     private val sessionRepository: SessionRepository,
+    private val botTools: BotTools,
 ) {
     fun getUser(tgUser: com.pengrad.telegrambot.model.User): User {
         val userOpt = userRepository.findById(tgUser.id())
@@ -263,7 +266,48 @@ class BotService(
         }
     }
 
+     @Scheduled(fixedDelay = 5_000)
+     fun contactActiveOperatorScheduled(){
 
+         val activeOperator = userRepository.findFirstActiveOperator(UserRole.OPERATOR, OperatorStatus.ACTIVE).orElse(null)
+         if(activeOperator != null) {
+             val queuedSession = botTools.getQueuedSession(activeOperator)
+             var session = sessionRepository.findByIdAndDeletedFalse(queuedSession!!.sessionId)
+             if(session!=null) {
+
+                 session.operator = activeOperator
+                 session.status = SessionStatus.BUSY
+                 session = sessionRepository.save(session)
+
+                 activeOperator.operatorStatus = OperatorStatus.BUSY
+                 val saved = userRepository.save(activeOperator)
+
+                 bot().execute(
+                     SendMessage(activeOperator.id, "User: " + session.user.fullName)
+                         .entities(
+                             MessageEntity(
+                                 MessageEntity.Type.text_mention,
+                                 "User: ".length,
+                                 session.user.fullName.length
+                             )
+                                 .user(com.pengrad.telegrambot.model.User(session.user.id))
+                         ).replyMarkup(
+                             ReplyKeyboardMarkup(
+                                 KeyboardButton("Stop chat ❌"),
+                                 KeyboardButton("Next user ➡️"),
+                                 KeyboardButton("Short break ▶️"),
+//                                                    KeyboardButton("To another operator 📁")
+                             ).resizeKeyboard(true)
+                         )
+                 )
+                 for (message in queuedSession!!.messages) {
+                     sendMessageToUser(saved, message, session)
+                 }
+             }
+
+         }
+
+     }
 
 
 }

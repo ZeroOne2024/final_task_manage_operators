@@ -9,6 +9,7 @@ import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove
 import com.pengrad.telegrambot.request.SendMessage
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.bot.Utils
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 interface BotTools {
@@ -16,8 +17,7 @@ interface BotTools {
     fun isOperator(userId: Long): Boolean
     fun determineMessageType(message: com.pengrad.telegrambot.model.Message): Pair<MessageType, String?>
     fun findActiveOperator(language: String): User?
-    fun getQueuedSession(operator: User): QueueResponse
-    fun changeOperatorStatus(operator: User, status: OperatorStatus)
+    fun getQueuedSession(operator: User): QueueResponse?
     fun stopChat(operator: User)
     fun breakOperator(operator: User)
     fun nextUser(operator: User)
@@ -53,7 +53,7 @@ class BotToolsImpl(
                 val photo = message.photo()[3]
                 Pair(MessageType.PHOTO, photo?.fileId())
             }
-
+            message.videoNote() != null -> Pair(MessageType.VIDEO, message.videoNote().fileId())
             message.voice() != null -> Pair(MessageType.VOICE, message.voice().fileId())
             message.video() != null -> Pair(MessageType.VIDEO, message.video().fileId())
             message.audio() != null -> Pair(MessageType.AUDIO, message.audio().fileId)
@@ -74,7 +74,8 @@ class BotToolsImpl(
     }
 
     @Synchronized
-    override fun getQueuedSession(operator: User): QueueResponse {
+    override fun getQueuedSession(operator: User): QueueResponse? {
+
         val languages = operator.languages
         val languageToQueueMap = mapOf(
             Language.UZ to DataLoader.queueUz,
@@ -83,7 +84,7 @@ class BotToolsImpl(
         )
 
         var smallestSession: Long? = null
-        var smallestQueue: Map<Long, CopyOnWriteArrayList<Messages>>? = null
+        var smallestQueue: ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>? = null
 
         for (language in languages) {
             val queue = languageToQueueMap[language]
@@ -94,20 +95,18 @@ class BotToolsImpl(
             }
         }
 
-        return smallestSession?.let {
-            QueueResponse(it, smallestQueue!![it]!!)
-        } ?: throw NoSessionInQueue()
-    }
-
-
-    override fun changeOperatorStatus(operator: User, status: OperatorStatus) {
-        if (status == OperatorStatus.ACTIVE) {
-            if (!true) operator.operatorStatus = status
-        } else {
-            operator.operatorStatus = status
+        return smallestSession?.let { session ->
+            smallestQueue?.let { queue ->
+                val messages = queue.remove(session)
+                if (messages != null) {
+                    QueueResponse(session, messages)
+                } else {
+                    throw NoSessionInQueue()
+                }
+            }
         }
-        userRepository.save(operator)
     }
+
 
 
     override fun stopChat(operator: User) {
