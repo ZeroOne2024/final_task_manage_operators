@@ -43,13 +43,15 @@ enum class MessageType {
     PHOTO,
     VIDEO,
     VIDEO_NOTE,
+    LOCATION,
     CONTACT,
+    DICE,
     STICKER,
     AUDIO,
     ANIMATION,
     DOCUMENT,
-    LOCATION,
     VOICE
+
 }
 
 enum class UserState {

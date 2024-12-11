@@ -58,10 +58,10 @@ class BotToolsImpl(
             message.audio() != null -> Pair(MessageType.AUDIO, message.audio().fileId)
             message.contact() != null -> Pair(MessageType.CONTACT, null)
             message.location() != null -> Pair(MessageType.LOCATION, null)
+            message.location() != null -> Pair(MessageType.DICE, null)
             message.sticker() != null -> Pair(MessageType.STICKER, message.sticker().fileId())
             message.animation() != null -> Pair(MessageType.ANIMATION, message.animation().fileId())
             message.document() != null -> Pair(MessageType.DOCUMENT, message.document().fileId())
-            //dice
             else -> throw UnSupportedMessageType()
         }
     }
@@ -115,7 +115,7 @@ class BotToolsImpl(
             val user = it.user
 
             it.status = SessionStatus.CLOSED
-            it.operator = null
+//            it.operator = null
             operator.operatorStatus = OperatorStatus.ACTIVE
             user.state = UserState.ACTIVE_USER
             sessionRepository.save(it)
