@@ -85,6 +85,8 @@ interface MessageRepository : BaseRepository<Messages> {
     fun findByUserIdAndMessageBotId(userId: Long, messageBotId: Int): Messages?
     fun findAllBySessionId(sessionId: Long): List<Messages>
     fun findAllByUserId(userId: Long): List<Messages>
+    fun findBySessionIdAndMessageBotId(sessionId: Long, messageBotId: Int): Messages?
+    fun findBySessionIdAndMessageId(sessionId: Long, messageId: Int): Messages?
 }
 
 interface SessionRepository : BaseRepository<Session> {

@@ -35,7 +35,8 @@ class BotToolsImpl(
         return when {
             message.text() != null -> Pair(MessageType.TEXT, null)
             message.photo() != null -> {
-                val photo = message.photo().maxByOrNull { it.fileSize() ?: 0 }
+//                val photo = message.photo().maxByOrNull { it.fileSize() ?: 0 }
+                val photo = message.photo()[3]
                 Pair(MessageType.PHOTO, photo?.fileId())
             }
 

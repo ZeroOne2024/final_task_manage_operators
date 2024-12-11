@@ -14,7 +14,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 class BotService(
     private val userRepository: UserRepository,
     private val messageRepository: MessageRepository,
-    private val sessionRepository: SessionRepository,) {
+    private val sessionRepository: SessionRepository,
+) {
     fun getUser(tgUser: com.pengrad.telegrambot.model.User): User {
         val userOpt = userRepository.findById(tgUser.id())
         if (userOpt.isPresent)
@@ -91,12 +92,16 @@ class BotService(
 //        }
 //    }
 
-    fun sendMessageToUser(user: User, message: Messages) {
+    fun sendMessageToUser(user: User, message: Messages, session: Session) {
         // Handle reply message ID, if present
-        val replyMessageId = message.replyMessageId?.let {
-            messageRepository.findByUserIdAndMessageBotId(user.id, it)?.messageBotId
-                ?: throw MessageNotFoundException()
+//        val replyMessageId = message.replyMessageId?.let {
+//            messageRepository.findByUserIdAndMessageBotId(user.id, it)?.messageBotId
+//        }
+        val replyMessageId = message.replyMessageId?.let { replyId ->
+            messageRepository.findBySessionIdAndMessageBotId(session.id!!, replyId)?.messageId
+                ?: messageRepository.findBySessionIdAndMessageId(session.id!!, replyId)?.messageBotId
         }
+
 
         val chatId = user.id.toString() // Assuming chat ID is the user ID
         val response: com.pengrad.telegrambot.model.Message? = when (message.messageType) {
@@ -105,28 +110,33 @@ class BotService(
                 replyMessageId?.let { sendMessage.replyToMessageId(it) }
                 bot().execute(sendMessage).message()
             }
+
             MessageType.PHOTO -> {
                 val sendPhoto = SendPhoto(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
                 if (!message.caption.isNullOrEmpty()) sendPhoto.caption(message.caption)
                 replyMessageId?.let { sendPhoto.replyToMessageId(it) }
                 bot().execute(sendPhoto).message()
             }
+
             MessageType.VIDEO -> {
                 val sendVideo = SendVideo(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
                 if (!message.caption.isNullOrEmpty()) sendVideo.caption(message.caption)
                 replyMessageId?.let { sendVideo.replyToMessageId(it) }
                 bot().execute(sendVideo).message()
             }
+
             MessageType.VOICE -> {
                 val sendVoice = SendVoice(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
                 replyMessageId?.let { sendVoice.replyToMessageId(it) }
                 bot().execute(sendVoice).message()
             }
+
             MessageType.AUDIO -> {
                 val sendAudio = SendAudio(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
                 replyMessageId?.let { sendAudio.replyToMessageId(it) }
                 bot().execute(sendAudio).message()
             }
+
             MessageType.CONTACT -> {
                 val contact = message.contact
                     ?: throw IllegalArgumentException("Contact information is missing")
@@ -134,6 +144,7 @@ class BotService(
                 replyMessageId?.let { sendContact.replyToMessageId(it) }
                 bot().execute(sendContact).message()
             }
+
             MessageType.LOCATION -> {
                 val location = message.location
                     ?: throw IllegalArgumentException("Location information is missing")
@@ -141,23 +152,28 @@ class BotService(
                 replyMessageId?.let { sendLocation.replyToMessageId(it) }
                 bot().execute(sendLocation).message()
             }
+
             MessageType.STICKER -> {
                 val sendSticker = SendSticker(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
                 replyMessageId?.let { sendSticker.replyToMessageId(it) }
                 bot().execute(sendSticker).message()
             }
+
             MessageType.ANIMATION -> {
-                val sendAnimation = SendAnimation(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
+                val sendAnimation =
+                    SendAnimation(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
                 if (!message.caption.isNullOrEmpty()) sendAnimation.caption(message.caption)
                 replyMessageId?.let { sendAnimation.replyToMessageId(it) }
                 bot().execute(sendAnimation).message()
             }
+
             MessageType.DOCUMENT -> {
                 val sendDocument = SendDocument(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
                 if (!message.caption.isNullOrEmpty()) sendDocument.caption(message.caption)
                 replyMessageId?.let { sendDocument.replyToMessageId(it) }
                 bot().execute(sendDocument).message()
             }
+
             else -> {
                 println("Unsupported message type: ${message.messageType}")
                 null
@@ -192,53 +208,60 @@ class BotService(
 
     @Transactional
     fun getSession(user: User): Session {
-        return sessionRepository.findLastSessionByUserId(user.id)?.run {
-            if (status == SessionStatus.CLOSED) {
+        val session = sessionRepository.findLastSessionByUserId(user.id)
+        return if (session != null) {
+            if (session.status == SessionStatus.CLOSED) {
+                bot().execute(SendMessage(user.id, "tez orada operator sizga javob beradi ⌚"))
                 user.let { sessionRepository.save(Session(it)) }
             } else {
-                this
+                session
             }
-        } ?: user.let { sessionRepository.save(Session(it)) }
+        } else {
+            bot().execute(SendMessage(user.id, "tez orada operator sizga javob beradi ⌚"))
+            user.let { sessionRepository.save(Session(it)) }
+        }
     }
-    fun getOperatorSession(operatorId: Long): Session {
-        return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
-            if (status == SessionStatus.CLOSED) throw SessionClosedException()
-            this
-        }?:throw SessionNotFoundExistException()
+
+    fun getOperatorSession(operatorId: Long): Session? {
+        return sessionRepository.findLastSessionByOperatorId(operatorId)?.let {
+            if (it.status == SessionStatus.CLOSED) null
+            it
+        }
     }
 
 
     @Transactional
-    fun terminateSession(operatorId: Long): Session {
-        return sessionRepository.findLastSessionByOperatorId(operatorId)?.run {
-            status=SessionStatus.CLOSED
-            sessionRepository.save(this)
-        }?:throw SessionNotFoundExistException()
-    }
-
-    @Transactional
-    fun setBusy(session: Session, operator: User): Session {
-        operator.operatorStatus=OperatorStatus.BUSY
-        userRepository.save(operator)
-        return session.run {
-            if (status != SessionStatus.WAITING) throw SessionAlreadyBusyException()
-
-            status = SessionStatus.BUSY
-            this.operator = operator
-            sessionRepository.save(this)
+    fun terminateSession(operatorId: Long): Session? {
+        return sessionRepository.findLastSessionByOperatorId(operatorId)?.let {
+            it.status = SessionStatus.CLOSED
+            sessionRepository.save(it)
         }
     }
 
     @Transactional
-    fun setRate(sessionId: Long, rate: Short): Session {
-        return sessionRepository.findByIdAndDeletedFalse(sessionId)?.run {
-            if (status != SessionStatus.BUSY) throw SessionClosedException()
-            this.rate=rate
-            sessionRepository.save(this)
-        }?: throw SessionNotFoundExistException()
+    fun setBusy(session: Session, operator: User): Session {
+        operator.operatorStatus = OperatorStatus.BUSY
+        userRepository.save(operator)
+        return session.run {
+            if (status == SessionStatus.WAITING) {
+                status = SessionStatus.BUSY
+                this.operator = operator
+                sessionRepository.save(this)
+            }
+            this
+        }
     }
 
-
+    @Transactional
+    fun setRate(sessionId: Long, rate: Short): Session? {
+        return sessionRepository.findByIdAndDeletedFalse(sessionId)?.let {
+            if (it.status == SessionStatus.CLOSED) {
+                it.rate = rate
+                sessionRepository.save(it)
+            }
+            it
+        }
+    }
 
 
 }
