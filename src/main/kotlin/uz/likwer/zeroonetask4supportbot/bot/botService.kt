@@ -191,7 +191,7 @@ class BotService(
     }
 
     @Synchronized
-    fun addMessage(id: Long, message: Messages, language: String) {
+    fun addMessageToMap(id: Long, message: Messages, language: String) {
         val targetQueue = when (language.lowercase()) {
             "en" -> DataLoader.queueEn
             "uz" -> DataLoader.queueUz
@@ -262,6 +262,8 @@ class BotService(
             it
         }
     }
+
+
 
 
 }

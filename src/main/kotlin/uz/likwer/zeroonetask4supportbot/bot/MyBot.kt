@@ -23,7 +23,6 @@ class MyBot(
     private val botService: BotService,
     private val userRepository: UserRepository,
     private val botTools: BotTools,
-    private val sessionService: SessionService,
     private val messageRepository: MessageRepository,
     private val locationRepository: LocationRepository,
     private val contactRepository: ContactRepository,
@@ -115,7 +114,7 @@ class MyBot(
                         if (text != null && text.equals("/end")) {
 
                         } else {
-                            val session = sessionService.getOperatorSession(chatId)
+                            val session = botService.getOperatorSession(chatId)
                             session?.let {
                                 val newMessage = Messages(
                                     user = session.operator!!,
@@ -174,7 +173,7 @@ class MyBot(
                                     botService.setBusy(session, ss)
                                     botService.sendMessageToUser(session.operator!!, savedMessage, session)
                                 } ?: {
-                                    botService.addMessage(
+                                    botService.addMessageToMap(
                                         session.id!!,
                                         savedMessage,
                                         session.user.languages[0].toString()
