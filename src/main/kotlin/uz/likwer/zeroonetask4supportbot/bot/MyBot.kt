@@ -3,14 +3,13 @@ package uz.likwer.zeroonetask4supportbot.bot
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.TelegramException
 import com.pengrad.telegrambot.UpdatesListener
-import com.pengrad.telegrambot.model.MessageEntity
 import com.pengrad.telegrambot.model.Update
-import com.pengrad.telegrambot.model.User
 import com.pengrad.telegrambot.model.request.ChatAction
-import com.pengrad.telegrambot.model.request.KeyboardButton
-import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup
 import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove
-import com.pengrad.telegrambot.request.*
+import com.pengrad.telegrambot.request.AnswerCallbackQuery
+import com.pengrad.telegrambot.request.DeleteMessage
+import com.pengrad.telegrambot.request.SendChatAction
+import com.pengrad.telegrambot.request.SendMessage
 import lombok.RequiredArgsConstructor
 import uz.likwer.zeroonetask4supportbot.backend.*
 import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.clearPhone
@@ -111,19 +110,25 @@ class MyBot(
                     }
 
                     if (user.operatorStatus != null) {
-                        if (text != null) {
-                            if (text.equals("Stop chat ❌")) {
-                                botTools.stopChat(user)
-                            } else if (text.equals("Next user ➡️")) {
-                                botTools.nextUser(user)
-                            } else if (text.equals("Short break ▶️")) {
-                                botTools.breakOperator(user)
-                            } else if (text.equals("Continue work ⏸️")) {
-                                botTools.continueWork(user)
-                            } else if (text.equals("End work 🏠")) {
-                                botTools.endWork(user)
+
+                            if (text != null) {
+                                if (text.equals("Stop chat ❌")) {
+                                    botTools.stopChat(user)
+                                    return
+                                } else if (text.equals("Next user ➡️")) {
+                                    botTools.nextUser(user)
+                                    return
+                                } else if (text.equals("Short break ▶️")) {
+                                    botTools.breakOperator(user)
+                                    return
+                                } else if (text.equals("Continue work ⏸️")) {
+                                    botTools.continueWork(user)
+                                    return
+                                } else if (text.equals("End work 🏠")) {
+                                    botTools.endWork(user)
+                                    return
+                                }
                             }
-                        } else {
                             val session = botService.getOperatorSession(chatId)
                             session?.let {
                                 val newMessage = Messages(
@@ -142,7 +147,7 @@ class MyBot(
                                 botService.sendMessageToUser(session.user, savedMessage, session)
                             }
                         }
-                    } else {
+                    else {
                         val sessionOpt = botService.getSession(user)
                         sessionOpt.let { session ->
                             val newMessage = Messages(

@@ -76,7 +76,7 @@ interface UserRepository : JpaRepository<User, Long> {
     fun findFirstActiveOperator(
         @Param("role") role: UserRole,
         @Param("status") status: OperatorStatus
-    ): Optional<User>
+    ): List<User>
 
 
 }
@@ -191,7 +191,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         "SELECT s FROM sessions s " +
                 "WHERE s.user.id = :userId " +
-                "ORDER BY s.createdDate DESC"
+                "ORDER BY s.createdDate DESC limit 1"
     )
     fun findLastSessionByUserId(@Param("userId") userId: Long): Session?
 

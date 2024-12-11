@@ -19,6 +19,8 @@ class BotService(
     private val sessionRepository: SessionRepository,
     private val botTools: BotTools,
 ) {
+
+    @Synchronized
     fun getUser(tgUser: com.pengrad.telegrambot.model.User): User {
         val userOpt = userRepository.findById(tgUser.id())
         if (userOpt.isPresent)
@@ -232,29 +234,6 @@ class BotService(
         }
     }
 
-
-    @Transactional
-    fun terminateSession(operatorId: Long): Session? {
-        return sessionRepository.findLastSessionByOperatorId(operatorId)?.let {
-            it.status = SessionStatus.CLOSED
-            sessionRepository.save(it)
-        }
-    }
-
-    @Transactional
-    fun setBusy(session: Session, operator: User): Session {
-        operator.operatorStatus = OperatorStatus.BUSY
-        userRepository.save(operator)
-        return session.run {
-            if (status == SessionStatus.WAITING) {
-                status = SessionStatus.BUSY
-                this.operator = operator
-                sessionRepository.save(this)
-            }
-            this
-        }
-    }
-
     @Transactional
     fun setRate(sessionId: Long, rate: Short): Session? {
         return sessionRepository.findByIdAndDeletedFalse(sessionId)?.let {
@@ -266,48 +245,52 @@ class BotService(
         }
     }
 
-     @Scheduled(fixedDelay = 5_000)
-     fun contactActiveOperatorScheduled(){
 
-         val activeOperator = userRepository.findFirstActiveOperator(UserRole.OPERATOR, OperatorStatus.ACTIVE).orElse(null)
-         if(activeOperator != null) {
-             val queuedSession = botTools.getQueuedSession(activeOperator)
-             var session = sessionRepository.findByIdAndDeletedFalse(queuedSession!!.sessionId)
-             if(session!=null) {
+    @Scheduled(fixedDelay = 5_000)
+    fun contactActiveOperatorScheduled() {
+        val activeOperators = userRepository.findFirstActiveOperator(UserRole.OPERATOR, OperatorStatus.ACTIVE)
 
-                 session.operator = activeOperator
-                 session.status = SessionStatus.BUSY
-                 session = sessionRepository.save(session)
+        for (activeOperator in activeOperators) {
+            val queuedSession = botTools.getQueuedSession(activeOperator)
+            if (queuedSession != null) {
+                var session = sessionRepository.findByIdAndDeletedFalse(queuedSession.sessionId)
+                if (session != null) {
 
-                 activeOperator.operatorStatus = OperatorStatus.BUSY
-                 val saved = userRepository.save(activeOperator)
+                    session.operator = activeOperator
+                    session.status = SessionStatus.BUSY
+                    session = sessionRepository.save(session)
 
-                 bot().execute(
-                     SendMessage(activeOperator.id, "User: " + session.user.fullName)
-                         .entities(
-                             MessageEntity(
-                                 MessageEntity.Type.text_mention,
-                                 "User: ".length,
-                                 session.user.fullName.length
-                             )
-                                 .user(com.pengrad.telegrambot.model.User(session.user.id))
-                         ).replyMarkup(
-                             ReplyKeyboardMarkup(
-                                 KeyboardButton("Stop chat ❌"),
-                                 KeyboardButton("Next user ➡️"),
-                                 KeyboardButton("Short break ▶️"),
+                    activeOperator.operatorStatus = OperatorStatus.BUSY
+                    val saved = userRepository.save(activeOperator)
+
+                    bot().execute(
+                        SendMessage(activeOperator.id, "User: " + session.user.fullName)
+                            .entities(
+                                MessageEntity(
+                                    MessageEntity.Type.text_mention,
+                                    "User: ".length,
+                                    session.user.fullName.length
+                                )
+                                    .user(com.pengrad.telegrambot.model.User(session.user.id))
+                            ).replyMarkup(
+                                ReplyKeyboardMarkup(
+                                    KeyboardButton("Stop chat ❌"),
+                                    KeyboardButton("Next user ➡️"),
+                                    KeyboardButton("Short break ▶️"),
 //                                                    KeyboardButton("To another operator 📁")
-                             ).resizeKeyboard(true)
-                         )
-                 )
-                 for (message in queuedSession!!.messages) {
-                     sendMessageToUser(saved, message, session)
-                 }
-             }
+                                ).resizeKeyboard(true)
+                            )
+                    )
+                    for (message in queuedSession.messages) {
+                        sendMessageToUser(saved, message, session)
+                    }
+                }
+            }
 
-         }
+        }
 
-     }
+
+    }
 
 
 }

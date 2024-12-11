@@ -49,8 +49,7 @@ class BotToolsImpl(
         return when {
             message.text() != null -> Pair(MessageType.TEXT, null)
             message.photo() != null -> {
-//                val photo = message.photo().maxByOrNull { it.fileSize() ?: 0 }
-                val photo = message.photo()[3]
+                val photo = message.photo().maxByOrNull { it.fileSize() ?: 0 }
                 Pair(MessageType.PHOTO, photo?.fileId())
             }
             message.videoNote() != null -> Pair(MessageType.VIDEO, message.videoNote().fileId())
@@ -118,6 +117,9 @@ class BotToolsImpl(
             it.operator = null
             operator.operatorStatus = OperatorStatus.ACTIVE
             user.state = UserState.ACTIVE_USER
+            sessionRepository.save(it)
+            userRepository.save(user)
+            userRepository.save(operator)
             bot().execute(
                 SendMessage(user.id, "Operator stopped the chat\nPlease rate operator's work")
                     .replyMarkup(
@@ -135,6 +137,7 @@ class BotToolsImpl(
     }
 
     override fun breakOperator(operator: User) {
+        stopChat(operator)
         if (operator.operatorStatus != OperatorStatus.BUSY) {
             operator.operatorStatus = OperatorStatus.PAUSED
             userRepository.save(operator)
