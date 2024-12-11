@@ -60,7 +60,7 @@ class BotService(
 
     fun askPhone(user: User) {
         bot().execute(
-            SendMessage(user.id, "Click 👇 to send share your phone")
+            SendMessage(user.id, "Click 👇 to send your phone")
                 .replyMarkup(
                     ReplyKeyboardMarkup(
                         KeyboardButton("Share phone number").requestContact(true)
@@ -71,48 +71,13 @@ class BotService(
         userRepository.save(user)
     }
 
-//    fun sendPhotoWithCaptionToOperator(user: User, photo: PhotoSize, caption: String) {
-//        if (user.state == UserState.TALKING) {
-//            bot().execute(SendPhoto(user.talkingUserId, photo.fileId()).caption(caption))
-//        }
-//    }
-//
-//    fun sendPhotoToOperator(user: User, photo: PhotoSize) {
-//        if (user.state == UserState.TALKING) {
-//            bot().execute(SendPhoto(user.talkingUserId, photo.fileId()))
-//        }
-//    }
-//
-//    fun sendContactToOperator(user: User, contact: Contact, phoneNumber: String) {
-//        if (user.state == UserState.TALKING) {
-//            bot().execute(SendContact(user.talkingUserId, phoneNumber, contact.firstName()))
-//        }
-//    }
-//
-//    fun sendVoiceToOperator(user: User, voice: Voice) {
-//        if (user.state == UserState.TALKING) {
-//            bot().execute(SendVoice(user.talkingUserId, voice.fileId()))
-//        }
-//    }
-//
-//    fun sendAudioToOperator(user: User, audio: Audio) {
-//        if (user.state == UserState.TALKING) {
-//            bot().execute(SendAudio(user.talkingUserId, audio.fileId))
-//        }
-//    }
-
     fun sendMessageToUser(user: User, message: Messages, session: Session) {
-        // Handle reply message ID, if present
-//        val replyMessageId = message.replyMessageId?.let {
-//            messageRepository.findByUserIdAndMessageBotId(user.id, it)?.messageBotId
-//        }
         val replyMessageId = message.replyMessageId?.let { replyId ->
             messageRepository.findBySessionIdAndMessageBotId(session.id!!, replyId)?.messageId
                 ?: messageRepository.findBySessionIdAndMessageId(session.id!!, replyId)?.messageBotId
         }
 
-
-        val chatId = user.id.toString() // Assuming chat ID is the user ID
+        val chatId = user.id.toString()
         val response: com.pengrad.telegrambot.model.Message? = when (message.messageType) {
             MessageType.TEXT -> {
                 val sendMessage = SendMessage(chatId, message.text ?: "")
@@ -121,27 +86,27 @@ class BotService(
             }
 
             MessageType.PHOTO -> {
-                val sendPhoto = SendPhoto(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
+                val sendPhoto = SendPhoto(chatId, message.fileId ?: "")
                 if (!message.caption.isNullOrEmpty()) sendPhoto.caption(message.caption)
                 replyMessageId?.let { sendPhoto.replyToMessageId(it) }
                 bot().execute(sendPhoto).message()
             }
 
             MessageType.VIDEO -> {
-                val sendVideo = SendVideo(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
+                val sendVideo = SendVideo(chatId, message.fileId ?: "")
                 if (!message.caption.isNullOrEmpty()) sendVideo.caption(message.caption)
                 replyMessageId?.let { sendVideo.replyToMessageId(it) }
                 bot().execute(sendVideo).message()
             }
 
             MessageType.VOICE -> {
-                val sendVoice = SendVoice(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
+                val sendVoice = SendVoice(chatId, message.fileId ?: "")
                 replyMessageId?.let { sendVoice.replyToMessageId(it) }
                 bot().execute(sendVoice).message()
             }
 
             MessageType.AUDIO -> {
-                val sendAudio = SendAudio(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
+                val sendAudio = SendAudio(chatId, message.fileId ?: "")
                 replyMessageId?.let { sendAudio.replyToMessageId(it) }
                 bot().execute(sendAudio).message()
             }
@@ -163,25 +128,26 @@ class BotService(
             }
 
             MessageType.STICKER -> {
-                val sendSticker = SendSticker(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
+                val sendSticker = SendSticker(chatId, message.fileId ?: "")
                 replyMessageId?.let { sendSticker.replyToMessageId(it) }
                 bot().execute(sendSticker).message()
             }
 
             MessageType.ANIMATION -> {
                 val sendAnimation =
-                    SendAnimation(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
+                    SendAnimation(chatId, message.fileId ?: "")
                 if (!message.caption.isNullOrEmpty()) sendAnimation.caption(message.caption)
                 replyMessageId?.let { sendAnimation.replyToMessageId(it) }
                 bot().execute(sendAnimation).message()
             }
 
             MessageType.DOCUMENT -> {
-                val sendDocument = SendDocument(chatId, message.fileId ?: "") // Assuming fileId is already on Telegram
+                val sendDocument = SendDocument(chatId, message.fileId ?: "")
                 if (!message.caption.isNullOrEmpty()) sendDocument.caption(message.caption)
                 replyMessageId?.let { sendDocument.replyToMessageId(it) }
                 bot().execute(sendDocument).message()
             }
+
             MessageType.DICE -> {
                 val sendDice = SendDice(chatId)
                 message.dice?.emoji?.let { sendDice.emoji(it) }
@@ -195,12 +161,10 @@ class BotService(
             }
         }
 
-        // Save the bot message ID to the database
         response?.let {
             message.messageBotId = it.messageId()
         }
 
-        // Mark the message as deleted (if applicable) and save it
         message.deleted = true
         messageRepository.save(message)
     }
@@ -350,11 +314,6 @@ class BotService(
                     }
                 }
             }
-
         }
-
-
     }
-
-
 }
