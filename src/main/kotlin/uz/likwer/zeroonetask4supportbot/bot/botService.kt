@@ -25,11 +25,15 @@ class BotService(
         val userOpt = userRepository.findById(tgUser.id())
         if (userOpt.isPresent)
             return userOpt.get()
+        var username = tgUser.username()
+        if (username == null) username = ""
+        var lastName = tgUser.lastName()
+        lastName = if (lastName == null) "" else " $lastName"
         return userRepository.save(
             User(
                 tgUser.id(),
-                tgUser.username(),
-                tgUser.firstName() + " " + tgUser.lastName(),
+                username,
+                tgUser.firstName() + lastName,
                 "",
             )
         )

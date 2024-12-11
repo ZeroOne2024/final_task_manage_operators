@@ -108,46 +108,47 @@ class MyBot(
                     val contact = message.contact()?.let {
                         contactRepository.save(Contact(it.firstName(), it.phoneNumber()))
                     }
+//                    bot.execute(SendMessage(chatId, message.toString()))
+
 
                     if (user.operatorStatus != null) {
 
-                            if (text != null) {
-                                if (text.equals("Stop chat ❌")) {
-                                    botTools.stopChat(user)
-                                    return
-                                } else if (text.equals("Next user ➡️")) {
-                                    botTools.nextUser(user)
-                                    return
-                                } else if (text.equals("Short break ▶️")) {
-                                    botTools.breakOperator(user)
-                                    return
-                                } else if (text.equals("Continue work ⏸️")) {
-                                    botTools.continueWork(user)
-                                    return
-                                } else if (text.equals("End work 🏠")) {
-                                    botTools.endWork(user)
-                                    return
-                                }
-                            }
-                            val session = botService.getOperatorSession(chatId)
-                            session?.let {
-                                val newMessage = Messages(
-                                    user = session.operator!!,
-                                    session = session,
-                                    messageId = messageId,
-                                    replyMessageId = messageReplyId,
-                                    messageType = typeAndFileId.first,
-                                    text = text,
-                                    caption = caption,
-                                    fileId = typeAndFileId.second,
-                                    location = location,
-                                    contact = contact
-                                )
-                                val savedMessage = messageRepository.save(newMessage)
-                                botService.sendMessageToUser(session.user, savedMessage, session)
+                        if (text != null) {
+                            if (text.equals("Stop chat ❌")) {
+                                botTools.stopChat(user)
+                                return
+                            } else if (text.equals("Next user ➡️")) {
+                                botTools.nextUser(user)
+                                return
+                            } else if (text.equals("Short break ▶️")) {
+                                botTools.breakOperator(user)
+                                return
+                            } else if (text.equals("Continue work ⏸️")) {
+                                botTools.continueWork(user)
+                                return
+                            } else if (text.equals("End work 🏠")) {
+                                botTools.endWork(user)
+                                return
                             }
                         }
-                    else {
+                        val session = botService.getOperatorSession(chatId)
+                        session?.let {
+                            val newMessage = Messages(
+                                user = session.operator!!,
+                                session = session,
+                                messageId = messageId,
+                                replyMessageId = messageReplyId,
+                                messageType = typeAndFileId.first,
+                                text = text,
+                                caption = caption,
+                                fileId = typeAndFileId.second,
+                                location = location,
+                                contact = contact
+                            )
+                            val savedMessage = messageRepository.save(newMessage)
+                            botService.sendMessageToUser(session.user, savedMessage, session)
+                        }
+                    } else {
                         val sessionOpt = botService.getSession(user)
                         sessionOpt.let { session ->
                             val newMessage = Messages(
@@ -167,11 +168,11 @@ class MyBot(
                             if (session.operator != null) {
                                 botService.sendMessageToUser(session.operator!!, savedMessage, session)
                             } else {
-                                    botService.addMessageToMap(
-                                        session.id!!,
-                                        savedMessage,
-                                        session.user.languages[0].toString()
-                                    )
+                                botService.addMessageToMap(
+                                    session.id!!,
+                                    savedMessage,
+                                    session.user.languages[0].toString()
+                                )
 
                             }
                         }
@@ -188,6 +189,7 @@ class MyBot(
                     val lang = Language.valueOf(data.substring("setLang".length).uppercase())
                     if (!user.languages.contains(lang)) {
                         user.languages.add(lang)
+                        bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                     }
 
                     if (user.phoneNumber.isEmpty()) {

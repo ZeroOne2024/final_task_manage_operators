@@ -87,3 +87,9 @@ class Location(
     @Column(nullable = false) val latitude: Float,
     @Column(nullable = false) val longitude: Float,
 ) : BaseEntity()
+
+@Entity(name = "dice")
+class Dice(
+    @Column(nullable = false) val value: Int,
+    @Column(nullable = false) val emoji: String,
+) : BaseEntity()

@@ -61,6 +61,7 @@ class BotToolsImpl(
             message.sticker() != null -> Pair(MessageType.STICKER, message.sticker().fileId())
             message.animation() != null -> Pair(MessageType.ANIMATION, message.animation().fileId())
             message.document() != null -> Pair(MessageType.DOCUMENT, message.document().fileId())
+            //dice
             else -> throw UnSupportedMessageType()
         }
     }
