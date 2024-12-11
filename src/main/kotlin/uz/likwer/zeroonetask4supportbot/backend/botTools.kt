@@ -1,21 +1,25 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
+import com.pengrad.telegrambot.TelegramBot
+import com.pengrad.telegrambot.model.request.InlineKeyboardButton
+import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup
+import com.pengrad.telegrambot.model.request.KeyboardButton
+import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup
+import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove
+import com.pengrad.telegrambot.request.SendMessage
 import org.springframework.stereotype.Service
+import uz.likwer.zeroonetask4supportbot.bot.Utils
 import java.util.concurrent.CopyOnWriteArrayList
 
 interface BotTools {
 
     fun isOperator(userId: Long): Boolean
-
     fun determineMessageType(message: com.pengrad.telegrambot.model.Message): Pair<MessageType, String?>
-
     fun findActiveOperator(language: String): User?
-
     fun getQueuedSession(operator: User): QueueResponse
     fun changeOperatorStatus(operator: User, status: OperatorStatus)
     fun stopChat(operator: User)
     fun breakOperator(operator: User)
-
 
 }
 
@@ -24,6 +28,10 @@ class BotToolsImpl(
     private val userRepository: UserRepository,
     private val sessionRepository: SessionRepository,
 ) : BotTools {
+
+    fun bot(): TelegramBot {
+        return Utils.telegramBot()
+    }
 
     override fun isOperator(userId: Long): Boolean {
         val user = userRepository.findById(userId)
@@ -103,14 +111,37 @@ class BotToolsImpl(
         session?.let {
             val user = it.user
 
-            if (it.status == SessionStatus.BUSY) {
-
-            }
-//            it.status = SessionStatus.
+            it.status = SessionStatus.CLOSED
+            it.operator = null
+            operator.operatorStatus = OperatorStatus.ACTIVE
+            user.state = UserState.ACTIVE_USER
+            bot().execute(
+                SendMessage(user.id, "Operator stopped the chat\nPlease rate operator's work")
+                    .replyMarkup(
+                        InlineKeyboardMarkup(
+                            InlineKeyboardButton("1").callbackData("rateS1" + session.id),
+                            InlineKeyboardButton("2").callbackData("rateS2" + session.id),
+                            InlineKeyboardButton("3").callbackData("rateS3" + session.id),
+                            InlineKeyboardButton("4").callbackData("rateS4" + session.id),
+                            InlineKeyboardButton("5").callbackData("rateS5" + session.id)
+                        )
+                    )
+            )
+            bot().execute(SendMessage(user.id, "Ask your question").replyMarkup(ReplyKeyboardRemove()))
         }
     }
 
     override fun breakOperator(operator: User) {
-
+        operator.operatorStatus = OperatorStatus.PAUSED
+        userRepository.save(operator)
+        bot().execute(
+            SendMessage(operator.id, "Work paused")
+                .replyMarkup(
+                    ReplyKeyboardMarkup(
+                        KeyboardButton("Continue work ⏸️"),
+                        KeyboardButton("End work ❌")
+                    )
+                )
+        )
     }
 }

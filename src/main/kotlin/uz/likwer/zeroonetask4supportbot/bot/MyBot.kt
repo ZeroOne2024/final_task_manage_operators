@@ -197,7 +197,7 @@ class MyBot(
                 val tgUser = callbackQuery.from()
                 val user = botService.getUser(tgUser)
                 val chatId = tgUser.id()
-                val data = callbackQuery.data()
+                var data = callbackQuery.data()
 
                 if (data.startsWith("setLang")) {
                     val lang = Language.valueOf(data.substring("setLang".length).uppercase())
@@ -208,6 +208,14 @@ class MyBot(
                     if (user.phoneNumber.isEmpty()) {
                         botService.askPhone(user)
                     }
+                } else if (data.startsWith("rateS")) {
+                    data = data.substring("rateS".length)
+                    val rate = data.substring(0, 1).toShort()
+                    val sessionId = data.substring(1).toLong()
+
+                    botService.setRate(sessionId, rate)
+                    bot.execute(AnswerCallbackQuery(callbackQuery.id()).text("Thank you❤️").showAlert(true))
+                    bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                 }
             }
         } catch (e: Exception) {
