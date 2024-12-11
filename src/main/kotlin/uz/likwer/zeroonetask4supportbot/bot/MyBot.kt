@@ -25,6 +25,7 @@ class MyBot(
     private val messageRepository: MessageRepository,
     private val locationRepository: LocationRepository,
     private val contactRepository: ContactRepository,
+    private val diceRepository: DiceRepository,
     private val executorService: Executor = Executors.newFixedThreadPool(20)
 ) {
 
@@ -108,6 +109,9 @@ class MyBot(
                     val contact = message.contact()?.let {
                         contactRepository.save(Contact(it.firstName(), it.phoneNumber()))
                     }
+                    val dice=message.dice()?.let{
+                        diceRepository.save(Dice(it.value(),it.emoji()))
+                    }
 //                    bot.execute(SendMessage(chatId, message.toString()))
 
 
@@ -143,7 +147,8 @@ class MyBot(
                                 caption = caption,
                                 fileId = typeAndFileId.second,
                                 location = location,
-                                contact = contact
+                                contact = contact,
+                                dice = dice,
                             )
                             val savedMessage = messageRepository.save(newMessage)
                             botService.sendMessageToUser(session.user, savedMessage, session)
@@ -161,7 +166,8 @@ class MyBot(
                                 caption = caption,
                                 fileId = typeAndFileId.second,
                                 location = location,
-                                contact = contact
+                                contact = contact,
+                                dice = dice,
                             )
                             val savedMessage = messageRepository.save(newMessage)
 

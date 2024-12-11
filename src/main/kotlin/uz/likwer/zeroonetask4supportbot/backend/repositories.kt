@@ -55,6 +55,7 @@ class BaseRepositoryImpl<T : BaseEntity>(
         return save(t).apply { entityManager.refresh(this) }
     }
 }
+interface DiceRepository : BaseRepository<Dice>{}
 
 interface UserRepository : JpaRepository<User, Long> {
     fun existsByRole(role: UserRole): Boolean

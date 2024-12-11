@@ -182,6 +182,12 @@ class BotService(
                 replyMessageId?.let { sendDocument.replyToMessageId(it) }
                 bot().execute(sendDocument).message()
             }
+            MessageType.DICE -> {
+                val sendDice = SendDice(chatId)
+                message.dice?.emoji?.let { sendDice.emoji(it) }
+                replyMessageId?.let { sendDice.replyToMessageId(it) }
+                bot().execute(sendDice).message()
+            }
 
             else -> {
                 println("Unsupported message type: ${message.messageType}")
