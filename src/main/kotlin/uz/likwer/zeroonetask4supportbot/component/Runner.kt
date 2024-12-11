@@ -13,7 +13,6 @@ class Runner(
     private val botService: BotService,
     private val userRepository: UserRepository,
     private val botTools: BotTools,
-    private val sessionService: SessionService,
     private val messageRepository: MessageRepository,
     private val locationRepository: LocationRepository,
     private val contactRepository: ContactRepository,
@@ -24,7 +23,15 @@ class Runner(
     val telegramBot = TelegramBot(botToken)
 
     override fun run(vararg args: String?) {
-        MyBot(telegramBot, botService, userRepository, botTools, sessionService,messageRepository,locationRepository,contactRepository).start()
+        MyBot(
+            telegramBot,
+            botService,
+            userRepository,
+            botTools,
+            messageRepository,
+            locationRepository,
+            contactRepository
+        ).start()
     }
 
     @Bean
