@@ -8,12 +8,13 @@ import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup
 import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove
 import com.pengrad.telegrambot.request.SendMessage
 import org.springframework.stereotype.Service
+import uz.likwer.zeroonetask4supportbot.bot.CustomMessageSource
 import uz.likwer.zeroonetask4supportbot.bot.Utils
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 interface BotTools {
-
     fun isOperator(userId: Long): Boolean
     fun determineMessageType(message: com.pengrad.telegrambot.model.Message): Pair<MessageType, String?>
     fun findActiveOperator(language: String): User?
@@ -23,6 +24,8 @@ interface BotTools {
     fun nextUser(operator: User)
     fun continueWork(operator: User)
     fun endWork(operator: User)
+    fun getMsg(key: String, user: User): String
+    fun getMsgKeyByValue(value: String, user: User): String
 
 }
 
@@ -30,10 +33,13 @@ interface BotTools {
 class BotToolsImpl(
     private val userRepository: UserRepository,
     private val sessionRepository: SessionRepository,
+    private val messageSource: CustomMessageSource,
 ) : BotTools {
-
     fun bot(): TelegramBot {
         return Utils.telegramBot()
+    }
+    fun botTools(): BotTools {
+        return Utils.botTools()
     }
 
     override fun isOperator(userId: Long): Boolean {
@@ -52,6 +58,7 @@ class BotToolsImpl(
                 val photo = message.photo().maxByOrNull { it.fileSize() ?: 0 }
                 Pair(MessageType.PHOTO, photo?.fileId())
             }
+
             message.videoNote() != null -> Pair(MessageType.VIDEO, message.videoNote().fileId())
             message.voice() != null -> Pair(MessageType.VOICE, message.voice().fileId())
             message.video() != null -> Pair(MessageType.VIDEO, message.video().fileId())
@@ -108,7 +115,6 @@ class BotToolsImpl(
     }
 
 
-
     override fun stopChat(operator: User) {
         val session = sessionRepository.findByOperatorIdAndStatus(operator.id, SessionStatus.BUSY)
         session?.let {
@@ -133,7 +139,7 @@ class BotToolsImpl(
                         )
                     )
             )
-            bot().execute(SendMessage(user.id, "Ask your question").replyMarkup(ReplyKeyboardRemove()))
+            bot().execute(SendMessage(user.id, botTools().getMsg("ASK_YOUR_QUESTION", user)).replyMarkup(ReplyKeyboardRemove()))
         }
     }
 
@@ -178,6 +184,24 @@ class BotToolsImpl(
     }
 
     override fun nextUser(operator: User) {
+        //TODO
+    }
 
+
+    //translate functions
+    override fun getMsg(key: String, user: User): String {
+        val locale = Locale.forLanguageTag(user.languages[0].name.lowercase())
+        return messageSource.getMessage(key, null, locale)
+    }
+
+    override fun getMsgKeyByValue(value: String, user: User): String {
+        val locale = Locale.forLanguageTag(user.languages[0].name.lowercase())
+        val bundle = messageSource.getBundle("messages", locale)
+        bundle?.let {
+            for (key in it.keySet())
+                if (it.getString(key) == value)
+                    return key
+        }
+        return ""
     }
 }

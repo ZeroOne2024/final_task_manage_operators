@@ -16,6 +16,7 @@ class Runner(
     private val messageRepository: MessageRepository,
     private val locationRepository: LocationRepository,
     private val contactRepository: ContactRepository,
+    private val diceRepository: DiceRepository,
 ) : CommandLineRunner {
 
     // t.me/zero_one_support_bot
@@ -30,7 +31,8 @@ class Runner(
             botTools,
             messageRepository,
             locationRepository,
-            contactRepository
+            contactRepository,
+            diceRepository
         ).start()
     }
 

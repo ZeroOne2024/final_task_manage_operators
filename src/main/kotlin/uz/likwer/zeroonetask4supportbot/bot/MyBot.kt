@@ -69,11 +69,12 @@ class MyBot(
                                 userRepository.save(user)
 
                                 bot.execute(
-                                    SendMessage(chatId, "Ask your question")
+                                    SendMessage(chatId, botTools.getMsg("ASK_YOUR_QUESTION", user))
                                         .replyMarkup(ReplyKeyboardRemove())
                                 )
                             }
                         }
+
                     } else if (message.contact() != null) {
                         val contact = message.contact()
                         val phoneNumber = contact.phoneNumber().clearPhone()
@@ -112,7 +113,6 @@ class MyBot(
                     val dice=message.dice()?.let{
                         diceRepository.save(Dice(it.value(),it.emoji()))
                     }
-//                    bot.execute(SendMessage(chatId, message.toString()))
 
 
                     if (user.operatorStatus != null) {

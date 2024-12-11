@@ -1,6 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.bot
 
 import com.pengrad.telegrambot.TelegramBot
+import uz.likwer.zeroonetask4supportbot.backend.BotTools
 import uz.likwer.zeroonetask4supportbot.component.SpringContext
 
 class Utils {
@@ -10,6 +11,13 @@ class Utils {
             if (bot == null)
                 return SpringContext.getBean(TelegramBot::class.java)
             return bot as TelegramBot
+        }
+
+        private var botTools: BotTools? = null
+        fun botTools(): BotTools {
+            if (botTools == null)
+                return SpringContext.getBean(BotTools::class.java)
+            return botTools as BotTools
         }
 
         fun String.prettyPhoneNumber(): String {

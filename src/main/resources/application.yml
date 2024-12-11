@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/support_bot_db
+    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
-    password: Sobirov0717
+    password: 2522
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
