@@ -201,6 +201,7 @@ interface SessionRepository : BaseRepository<Session> {
                 "ORDER BY s.createdDate DESC"
     )
     fun findLastSessionByOperatorId(@Param("operatorId") operatorId: Long): Session?
+    fun findByOperatorIdAndStatus(operatorId: Long, status: SessionStatus): Session?
     fun getSessionByUserId(userId: Long, pageable: Pageable): Page<Session>
     fun getSessionByOperatorId(operatorId: Long, pageable: Pageable): Page<Session>
     fun getSessionByStatus(status: SessionStatus, pageable: Pageable): Page<Session>
@@ -209,3 +210,4 @@ interface SessionRepository : BaseRepository<Session> {
 
 interface LocationRepository : BaseRepository<Location>
 interface ContactRepository : BaseRepository<Contact>
+interface DoubleOperatorRepository : BaseRepository<DoubleOperator>

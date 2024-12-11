@@ -80,8 +80,8 @@ class MyBot(
 
                         if (user.state == UserState.SEND_PHONE_NUMBER) {
                             if (contact.userId() != chatId) {
-                                bot.execute(SendMessage(chatId,"wrong number"))
-                            }else{
+                                bot.execute(SendMessage(chatId, "wrong number"))
+                            } else {
                                 user.phoneNumber = phoneNumber
                                 bot.execute(SendMessage(chatId, "Send your full name"))
                                 user.state = UserState.SEND_FULL_NAME
@@ -111,8 +111,16 @@ class MyBot(
                     }
 
                     if (user.operatorStatus != null) {
-                        if (text != null && text.equals("/end")) {
+                        if (text != null) {
+                            if (text.equals("Stop chat ❌")) {
+                                botTools.stopChat(user)
+                            } else if (text.equals("Next user ➡️")) {
 
+                            } else if (text.equals("Short break ▶️")) {
+                                botTools.breakOperator(user)
+                            } else if (text.equals("Continue work ⏸️")) {
+
+                            }
                         } else {
                             val session = botService.getOperatorSession(chatId)
                             session?.let {
@@ -165,8 +173,9 @@ class MyBot(
                                             ).replyMarkup(
                                                 ReplyKeyboardMarkup(
                                                     KeyboardButton("Stop chat ❌"),
-                                                    KeyboardButton("Pause work ⌚"),
-                                                    KeyboardButton("To another operator 📁")
+                                                    KeyboardButton("Next user ➡️"),
+                                                    KeyboardButton("Short break ▶️"),
+//                                                    KeyboardButton("To another operator 📁")
                                                 ).resizeKeyboard(true)
                                             )
                                     )

@@ -16,6 +16,7 @@ class BaseEntity(
     @LastModifiedDate @Temporal(TemporalType.TIMESTAMP) var modifiedDate: Date? = null,
     @Column(nullable = false) @ColumnDefault(value = "false") var deleted: Boolean = false
 )
+
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener::class)
 class BaseUserEntity(
@@ -53,7 +54,7 @@ class Messages(
     @Column(nullable = true) val fileId: String? = null,
     @OneToOne @JoinColumn(nullable = true) val location: Location? = null,
     @OneToOne @JoinColumn(nullable = true) val contact: Contact? = null,
-    ) : BaseEntity()
+) : BaseEntity()
 
 @Entity(name = "sessions")
 class Session(
@@ -61,7 +62,7 @@ class Session(
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
     @Enumerated(value = EnumType.STRING)
-    var status: SessionStatus=SessionStatus.WAITING,
+    var status: SessionStatus = SessionStatus.WAITING,
     @ManyToOne
     @JoinColumn(name = "operator_id", nullable = true)
     var operator: User? = null,
@@ -69,6 +70,11 @@ class Session(
     var rate: Short? = null
 ) : BaseEntity()
 
+@Entity(name = "double_operator")
+class DoubleOperator(
+    @ManyToOne val operator: User,
+    @ManyToOne val session: Session
+) : BaseEntity()
 
 @Entity(name = "contacts")
 class Contact(

@@ -13,6 +13,8 @@ interface BotTools {
 
     fun getQueuedSession(operator: User): QueueResponse
     fun changeOperatorStatus(operator: User, status: OperatorStatus)
+    fun stopChat(operator: User)
+    fun breakOperator(operator: User)
 
 
 }
@@ -20,6 +22,7 @@ interface BotTools {
 @Service
 class BotToolsImpl(
     private val userRepository: UserRepository,
+    private val sessionRepository: SessionRepository,
 ) : BotTools {
 
     override fun isOperator(userId: Long): Boolean {
@@ -93,5 +96,21 @@ class BotToolsImpl(
             operator.operatorStatus = status
         }
         userRepository.save(operator)
+    }
+
+    override fun stopChat(operator: User) {
+        val session = sessionRepository.findByOperatorIdAndStatus(operator.id, SessionStatus.BUSY)
+        session?.let {
+            val user = it.user
+
+            if (it.status == SessionStatus.BUSY) {
+
+            }
+//            it.status = SessionStatus.
+        }
+    }
+
+    override fun breakOperator(operator: User) {
+
     }
 }
