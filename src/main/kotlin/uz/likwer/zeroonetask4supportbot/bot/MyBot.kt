@@ -115,11 +115,13 @@ class MyBot(
                             if (text.equals("Stop chat ❌")) {
                                 botTools.stopChat(user)
                             } else if (text.equals("Next user ➡️")) {
-
+                                botTools.nextUser(user)
                             } else if (text.equals("Short break ▶️")) {
                                 botTools.breakOperator(user)
                             } else if (text.equals("Continue work ⏸️")) {
-
+                                botTools.continueWork(user)
+                            } else if (text.equals("End work 🏠")) {
+                                botTools.endWork(user)
                             }
                         } else {
                             val session = botService.getOperatorSession(chatId)

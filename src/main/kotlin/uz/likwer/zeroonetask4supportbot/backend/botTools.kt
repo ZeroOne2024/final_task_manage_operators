@@ -20,6 +20,9 @@ interface BotTools {
     fun changeOperatorStatus(operator: User, status: OperatorStatus)
     fun stopChat(operator: User)
     fun breakOperator(operator: User)
+    fun nextUser(operator: User)
+    fun continueWork(operator: User)
+    fun endWork(operator: User)
 
 }
 
@@ -106,6 +109,7 @@ class BotToolsImpl(
         userRepository.save(operator)
     }
 
+
     override fun stopChat(operator: User) {
         val session = sessionRepository.findByOperatorIdAndStatus(operator.id, SessionStatus.BUSY)
         session?.let {
@@ -132,16 +136,45 @@ class BotToolsImpl(
     }
 
     override fun breakOperator(operator: User) {
-        operator.operatorStatus = OperatorStatus.PAUSED
-        userRepository.save(operator)
-        bot().execute(
-            SendMessage(operator.id, "Work paused")
-                .replyMarkup(
-                    ReplyKeyboardMarkup(
-                        KeyboardButton("Continue work ⏸️"),
-                        KeyboardButton("End work ❌")
+        if (operator.operatorStatus != OperatorStatus.BUSY) {
+            operator.operatorStatus = OperatorStatus.PAUSED
+            userRepository.save(operator)
+            bot().execute(
+                SendMessage(operator.id, "Work paused")
+                    .replyMarkup(
+                        ReplyKeyboardMarkup(
+                            KeyboardButton("Continue work ⏸️"),
+                            KeyboardButton("End work 🏠")
+                        )
                     )
-                )
-        )
+            )
+        }
+    }
+
+    override fun continueWork(operator: User) {
+        if (operator.operatorStatus != OperatorStatus.BUSY) {
+            operator.operatorStatus = OperatorStatus.ACTIVE
+            userRepository.save(operator)
+            bot().execute(SendMessage(operator.id, "Work continued"))
+        }
+    }
+
+    override fun endWork(operator: User) {
+        if (operator.operatorStatus != OperatorStatus.BUSY) {
+            operator.operatorStatus = OperatorStatus.INACTIVE
+            userRepository.save(operator)
+            bot().execute(
+                SendMessage(operator.id, "Work ended 🏠")
+                    .replyMarkup(
+                        ReplyKeyboardMarkup(
+                            KeyboardButton("Start work ✅")
+                        )
+                    )
+            )
+        }
+    }
+
+    override fun nextUser(operator: User) {
+
     }
 }
