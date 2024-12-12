@@ -118,21 +118,22 @@ class MyBot(
 
                     if (user.operatorStatus != null) {
 
-                        var isCommand = true
-                        if (text != null) {
-                            val msgKey = botTools.getMsgKeyByValue(text, user)
-                            if (msgKey == "STOP_CHAT") {
-                                botTools.stopChat(user)
-                            } else if (msgKey == "NEXT_USER") {
-                                botTools.nextUser(user)
-                            } else if (msgKey == "SHORT_BREAK") {
-                                botTools.breakOperator(user)
-                            } else if (msgKey == "CONTINUE_WORK") {
-                                botTools.continueWork(user)
-                            } else if (msgKey == "END_WORK") {
-                                botTools.endWork(user)
-                            } else isCommand = false
-                        }
+                        val isCommand = text?.let { botTools.processCommand(it, user) } ?: false
+//                        var isCommand = true
+//                        if (text != null) {
+//                            val msgKey = botTools.getMsgKeyByValue(text, user)
+//                            if (msgKey == "STOP_CHAT") {
+//                                botTools.stopChat(user)
+//                            } else if (msgKey == "NEXT_USER") {
+//                                botTools.nextUser(user)
+//                            } else if (msgKey == "SHORT_BREAK") {
+//                                botTools.breakOperator(user)
+//                            } else if (msgKey == "CONTINUE_WORK") {
+//                                botTools.continueWork(user)
+//                            } else if (msgKey == "END_WORK") {
+//                                botTools.endWork(user)
+//                            } else isCommand = false
+//                        }
                         if (!isCommand){
                             val session = botService.getOperatorSession(chatId)
                             session?.let {
@@ -183,6 +184,18 @@ class MyBot(
                             }
                         }
                     }
+                }
+            }else if (update.editedMessage() != null) {
+                val editedMessage = update.editedMessage()
+                val chatId = editedMessage.from().id()
+                val messageId = editedMessage.messageId()
+                val newText = editedMessage.text()
+                val newCaption = editedMessage.caption()
+
+                try {
+                    botService.editMessage(chatId, messageId, newText, newCaption)
+                } catch (e: Exception) {
+                    println("Error while editing message: ${e.message}")
                 }
             } else if (update.callbackQuery() != null) {
                 val callbackQuery = update.callbackQuery()

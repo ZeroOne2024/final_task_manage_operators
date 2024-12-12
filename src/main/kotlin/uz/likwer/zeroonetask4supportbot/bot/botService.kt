@@ -169,15 +169,15 @@ class BotService(
         messageRepository.save(message)
     }
 
+
     fun editMessage(chatId: Long, messageId: Int, newText: String?, newCaption: String?) {
-        // Retrieve the message from the database
+
         val message = messageRepository.findByUserIdAndMessageId(chatId,messageId)
             ?: throw IllegalArgumentException("Message with ID $messageId not found")
 
-        if (message.messageBotId != null) {
-            if (!newText.isNullOrBlank() && message.messageType == MessageType.TEXT) {
-                message.text = newText
-
+        if (!newText.isNullOrBlank() && message.messageType == MessageType.TEXT) {
+            message.text = newText
+            if (message.messageBotId != null) {
                 if (message.session.user.id == chatId) {
                     val editMessage = EditMessageText(message.session.operator?.id, message.messageBotId!!, newText)
                     bot().execute(editMessage)
@@ -186,15 +186,17 @@ class BotService(
                     bot().execute(editMessage)
                 }
             }
+        }
 
-            if (!newCaption.isNullOrBlank() && message.messageType in listOf(
-                    MessageType.PHOTO,
-                    MessageType.VIDEO,
-                    MessageType.DOCUMENT,
-                    MessageType.ANIMATION
-                )
-            ) {
-                message.caption = newCaption
+        if (!newCaption.isNullOrBlank() && message.messageType in listOf(
+                MessageType.PHOTO,
+                MessageType.VIDEO,
+                MessageType.DOCUMENT,
+                MessageType.ANIMATION
+            )
+        ) {
+            message.caption = newCaption
+            if (message.messageBotId != null) {
                 if (message.session.user.id == chatId) {
                     val editMessage =
                         EditMessageCaption(message.session.operator?.id, message.messageBotId!!).caption(newCaption)
@@ -204,19 +206,6 @@ class BotService(
                         EditMessageCaption(message.session.user.id, message.messageBotId!!).caption(newCaption)
                     bot().execute(editMessage)
                 }
-            }
-        }else{
-            if (!newText.isNullOrBlank() && message.messageType == MessageType.TEXT) {
-                message.text = newText
-            }
-            if (!newCaption.isNullOrBlank() && message.messageType in listOf(
-                    MessageType.PHOTO,
-                    MessageType.VIDEO,
-                    MessageType.DOCUMENT,
-                    MessageType.ANIMATION
-                )
-            ){
-             message.caption = newCaption
             }
         }
 

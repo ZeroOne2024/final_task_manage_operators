@@ -26,6 +26,7 @@ interface BotTools {
     fun endWork(operator: User)
     fun getMsg(key: String, user: User): String
     fun getMsgKeyByValue(value: String, user: User): String
+    fun processCommand(text: String, user: User): Boolean
 
 }
 
@@ -66,13 +67,42 @@ class BotToolsImpl(
             message.audio() != null -> Pair(MessageType.AUDIO, message.audio().fileId)
             message.contact() != null -> Pair(MessageType.CONTACT, null)
             message.location() != null -> Pair(MessageType.LOCATION, null)
-            message.location() != null -> Pair(MessageType.DICE, null)
+            message.dice() != null -> Pair(MessageType.DICE, null)
             message.sticker() != null -> Pair(MessageType.STICKER, message.sticker().fileId())
             message.animation() != null -> Pair(MessageType.ANIMATION, message.animation().fileId())
             message.document() != null -> Pair(MessageType.DOCUMENT, message.document().fileId())
             else -> throw UnSupportedMessageType()
         }
     }
+
+
+    override fun processCommand(text: String, user: User): Boolean {
+        val msgKey = getMsgKeyByValue(text, user)
+        return when (msgKey) {
+            "STOP_CHAT" -> {
+                stopChat(user)
+                true
+            }
+            "NEXT_USER" -> {
+                nextUser(user)
+                true
+            }
+            "SHORT_BREAK" -> {
+                breakOperator(user)
+                true
+            }
+            "CONTINUE_WORK" -> {
+                continueWork(user)
+                true
+            }
+            "END_WORK" -> {
+                endWork(user)
+                true
+            }
+            else -> false
+        }
+    }
+
 
     override fun findActiveOperator(language: String): User? {
         return userRepository.findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(
