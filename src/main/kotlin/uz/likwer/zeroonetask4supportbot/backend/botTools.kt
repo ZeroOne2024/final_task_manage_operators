@@ -298,7 +298,7 @@ class BotToolsImpl(
     }
 
     override fun sendSearchingUserMsg(operator: User) {
-        botTools().getMsg("SEARCHING_USER", operator).htmlBold()
+        bot().execute(SendMessage(operator.id, botTools().getMsg("SEARCHING_USER", operator).htmlBold()))
     }
 
     //translate functions
