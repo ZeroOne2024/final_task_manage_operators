@@ -300,7 +300,10 @@ class BotToolsImpl(
     }
 
     override fun sendSearchingUserMsg(operator: User) {
-        bot().execute(SendMessage(operator.id, botTools().getMsg("SEARCHING_USER", operator).htmlBold()))
+        bot().execute(
+            SendMessage(operator.id, botTools().getMsg("SEARCHING_USER", operator).htmlBold())
+                .parseMode(ParseMode.HTML)
+        )
     }
 
     //translate functions
@@ -359,6 +362,7 @@ class BotToolsImpl(
             sessionRepository.save(it)
             userRepository.save(operator)
 
+            sendSearchingUserMsg(operator)
             botService.contactActiveOperator(operator)
 
         }
