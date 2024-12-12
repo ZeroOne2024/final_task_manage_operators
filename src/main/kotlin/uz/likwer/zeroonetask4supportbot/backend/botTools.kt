@@ -48,7 +48,7 @@ class BotToolsImpl(
     private val sessionRepository: SessionRepository,
     private val messageSource: MessageSource,
     private val doubleOperatorRepository: DoubleOperatorRepository,
-    private val botService: BotService,
+//    private val botService: BotService,
 ) : BotTools {
 
     fun bot(): TelegramBot {
@@ -363,7 +363,7 @@ class BotToolsImpl(
             userRepository.save(operator)
 
             sendSearchingUserMsg(operator)
-            botService.contactActiveOperator(operator)
+//            botService.contactActiveOperator(operator)
 
         }
 
