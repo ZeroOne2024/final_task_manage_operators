@@ -1,6 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.bot
 
 import com.pengrad.telegrambot.TelegramBot
+import com.pengrad.telegrambot.model.LinkPreviewOptions
 import com.pengrad.telegrambot.model.MessageEntity
 import com.pengrad.telegrambot.model.request.*
 import com.pengrad.telegrambot.request.*
@@ -113,7 +114,6 @@ class BotService(
 
             MessageType.CONTACT -> {
                 val contact = message.contact!!
-//                    ?: throw IllegalArgumentException("Contact information is missing")
                 val sendContact = SendContact(chatId, contact.phone, contact.name)
                 replyMessageId?.let { sendContact.replyToMessageId(it) }
                 bot().execute(sendContact).message()
@@ -121,7 +121,6 @@ class BotService(
 
             MessageType.LOCATION -> {
                 val location = message.location!!
-//                    ?: throw IllegalArgumentException("Location information is missing")
                 val sendLocation = SendLocation(chatId, location.latitude, location.longitude)
                 replyMessageId?.let { sendLocation.replyToMessageId(it) }
                 bot().execute(sendLocation).message()
@@ -263,6 +262,35 @@ class BotService(
     }
 
 
+    private fun sendUserInfoForOperator(operator: User, user: User) {
+        val replyKeyboardMarkup = ReplyKeyboardMarkup(
+            KeyboardButton(botTools.getMsg("STOP_CHAT", operator))
+        ).addRow(
+            KeyboardButton(botTools.getMsg("NEXT_USER", operator)),
+            KeyboardButton(botTools.getMsg("TO_ANOTHER_OPERATOR", operator))
+        ).addRow(KeyboardButton(botTools.getMsg("SHORT_BREAK", operator)))
+            .resizeKeyboard(true)
+        val messageEntity = if (user.username.isEmpty())
+            MessageEntity(
+                MessageEntity.Type.text_mention,
+                (botTools.getMsg("USER", operator) + ": ").length,
+                user.fullName.length
+            ).user(com.pengrad.telegrambot.model.User(user.id))
+        else
+            MessageEntity(
+                MessageEntity.Type.text_link,
+                (botTools.getMsg("USER", operator) + ": ").length,
+                user.fullName.length
+            ).url("t.me/" + user.username)
+        bot().execute(
+            SendMessage(operator.id, botTools.getMsg("USER", operator) + ": " + user.fullName)
+                .entities(messageEntity)
+                .linkPreviewOptions(LinkPreviewOptions().isDisabled(true))
+                .replyMarkup(replyKeyboardMarkup)
+
+        )
+    }
+
     @Scheduled(fixedDelay = 5_000)
     fun contactActiveOperatorScheduled() {
         val activeOperators = userRepository.findFirstActiveOperator(UserRole.OPERATOR, OperatorStatus.ACTIVE)
@@ -280,24 +308,8 @@ class BotService(
                     activeOperator.operatorStatus = OperatorStatus.BUSY
                     val saved = userRepository.save(activeOperator)
 
-                    bot().execute(
-                        SendMessage(activeOperator.id, botTools.getMsg("USER", activeOperator)+": " + session.user.fullName)
-                            .entities(
-                                MessageEntity(
-                                    MessageEntity.Type.text_mention,
-                                    (botTools.getMsg("USER", activeOperator)+": ").length,
-                                    session.user.fullName.length
-                                )
-                                    .user(com.pengrad.telegrambot.model.User(session.user.id))
-                            ).replyMarkup(
-                                ReplyKeyboardMarkup(
-                                    KeyboardButton(botTools.getMsg("STOP_CHAT", activeOperator)),
-                                    KeyboardButton(botTools.getMsg("NEXT_USER", activeOperator)),
-                                    KeyboardButton(botTools.getMsg("SHORT_BREAK", activeOperator)),
-//                                                    KeyboardButton("To another operator 📁")
-                                ).resizeKeyboard(true)
-                            )
-                    )
+                    sendUserInfoForOperator(activeOperator, session.user)
+
                     for (message in queuedSession.messages) {
                         sendMessageToUser(saved, message, session)
                     }

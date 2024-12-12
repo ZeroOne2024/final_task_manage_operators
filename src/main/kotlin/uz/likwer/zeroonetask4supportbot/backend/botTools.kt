@@ -1,15 +1,13 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
 import com.pengrad.telegrambot.TelegramBot
-import com.pengrad.telegrambot.model.request.InlineKeyboardButton
-import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup
-import com.pengrad.telegrambot.model.request.KeyboardButton
-import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup
-import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove
+import com.pengrad.telegrambot.model.request.*
 import com.pengrad.telegrambot.request.SendMessage
+import jakarta.transaction.Transactional
 import org.springframework.context.MessageSource
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.bot.Utils
+import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.htmlBold
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -20,6 +18,7 @@ interface BotTools {
     fun findActiveOperator(language: String): User?
     fun getQueuedSession(operator: User): QueueResponse?
     fun stopChat(operator: User)
+    fun stopChatAndSearchUser(operator: User)
     fun breakOperator(operator: User)
     fun nextUser(operator: User)
     fun continueWork(operator: User)
@@ -28,6 +27,19 @@ interface BotTools {
     fun getMsgKeyByValue(value: String, user: User): String
     fun processCommand(text: String, user: User): Boolean
 
+    fun startWork(operator: User)
+    fun sendAskYourQuestionMsg(user: User)
+    fun sendWrongNumberMsg(user: User)
+    fun toAnotherOperator(operator: User)
+    fun sendRateMsg(user: User, operator: User, session: Session)
+    fun sendChatStoppedMsg(operator: User)
+    fun sendWorkPausedMsg(operator: User)
+    fun sendWorkEndedMsg(operator: User)
+    fun sendWorkStartedMsg(operator: User)
+    fun sendWorkContinuedMsg(operator: User)
+    fun sendSearchingUserMsg(operator: User)
+    fun sendChooseLangMsg(user: User)
+    fun sendSharePhoneMsg(user: User)
 }
 
 @Service
@@ -35,7 +47,9 @@ class BotToolsImpl(
     private val userRepository: UserRepository,
     private val sessionRepository: SessionRepository,
     private val messageSource: MessageSource,
+    private val doubleOperatorRepository: DoubleOperatorRepository,
 ) : BotTools {
+
     fun bot(): TelegramBot {
         return Utils.telegramBot()
     }
@@ -146,58 +160,40 @@ class BotToolsImpl(
     }
 
 
+    @Transactional
     override fun stopChat(operator: User) {
         val session = sessionRepository.findByOperatorIdAndStatus(operator.id, SessionStatus.BUSY)
         session?.let {
             val user = it.user
 
             it.status = SessionStatus.CLOSED
-//            it.operator = null
             operator.operatorStatus = OperatorStatus.ACTIVE
+            it.operator = null
+            userRepository.save(operator)
             user.state = UserState.ACTIVE_USER
             sessionRepository.save(it)
             userRepository.save(user)
-            userRepository.save(operator)
-            bot().execute(
-                SendMessage(
-                    user.id,
-                    botTools().getMsg(
-                        "OPERATOR_STOPPED_CHAT",
-                        operator
-                    ) + botTools().getMsg("PLEASE_RATE_OPERATOR_WORK", operator)
-                )
-                    .replyMarkup(
-                        InlineKeyboardMarkup(
-                            InlineKeyboardButton("1").callbackData("rateS1" + session.id),
-                            InlineKeyboardButton("2").callbackData("rateS2" + session.id),
-                            InlineKeyboardButton("3").callbackData("rateS3" + session.id),
-                            InlineKeyboardButton("4").callbackData("rateS4" + session.id),
-                            InlineKeyboardButton("5").callbackData("rateS5" + session.id)
-                        )
-                    )
-            )
-            bot().execute(
-                SendMessage(user.id, botTools().getMsg("ASK_YOUR_QUESTION", user)).replyMarkup(
-                    ReplyKeyboardRemove()
-                )
-            )
+
+            sendChatStoppedMsg(operator)
+            sendRateMsg(user, operator, session)
+            sendAskYourQuestionMsg(user)
         }
     }
 
+    @Transactional
+    override fun stopChatAndSearchUser(operator: User) {
+        stopChat(operator)
+        sendSearchingUserMsg(operator)
+    }
+
+    @Transactional
     override fun breakOperator(operator: User) {
         stopChat(operator)
         if (operator.operatorStatus != OperatorStatus.BUSY) {
             operator.operatorStatus = OperatorStatus.PAUSED
             userRepository.save(operator)
-            bot().execute(
-                SendMessage(operator.id, botTools().getMsg("WORK_PAUSED", operator))
-                    .replyMarkup(
-                        ReplyKeyboardMarkup(
-                            KeyboardButton(botTools().getMsg("CONTINUE_WORK", operator)),
-                            KeyboardButton(botTools().getMsg("END_WORK", operator))
-                        )
-                    )
-            )
+
+            sendWorkPausedMsg(operator)
         }
     }
 
@@ -205,7 +201,19 @@ class BotToolsImpl(
         if (operator.operatorStatus != OperatorStatus.BUSY) {
             operator.operatorStatus = OperatorStatus.ACTIVE
             userRepository.save(operator)
-            bot().execute(SendMessage(operator.id, botTools().getMsg("WORK_CONTINUED", operator)))
+
+            sendWorkContinuedMsg(operator)
+        }
+    }
+
+    override fun startWork(operator: User) {
+        if (operator.operatorStatus != OperatorStatus.BUSY) {
+            operator.operatorStatus = OperatorStatus.ACTIVE
+            userRepository.save(operator)
+
+            sendSearchingUserMsg(operator)
+            sendWorkStartedMsg(operator)
+
         }
     }
 
@@ -213,14 +221,8 @@ class BotToolsImpl(
         if (operator.operatorStatus != OperatorStatus.BUSY) {
             operator.operatorStatus = OperatorStatus.INACTIVE
             userRepository.save(operator)
-            bot().execute(
-                SendMessage(operator.id, botTools().getMsg("WORK_ENDED", operator))
-                    .replyMarkup(
-                        ReplyKeyboardMarkup(
-                            KeyboardButton(botTools().getMsg("START_WORK", operator))
-                        )
-                    )
-            )
+
+            sendWorkEndedMsg(operator)
         }
     }
 
@@ -228,6 +230,93 @@ class BotToolsImpl(
         //TODO
     }
 
+    override fun toAnotherOperator(operator: User) {
+        val session = sessionRepository.findLastSessionByOperatorId(operator.id)
+        session?.let {
+            if (!doubleOperatorRepository.existsByOperatorIdAndSessionId(operator.id, it.id!!)) {
+                doubleOperatorRepository.save(DoubleOperator(operator, it))
+            }
+        }
+    }
+
+    override fun sendAskYourQuestionMsg(user: User) {
+        bot().execute(
+            SendMessage(user.id, botTools().getMsg("ASK_YOUR_QUESTION", user).htmlBold())
+                .replyMarkup(ReplyKeyboardRemove())
+                .parseMode(ParseMode.HTML)
+        )
+    }
+
+    override fun sendWrongNumberMsg(user: User) {
+        bot().execute(SendMessage(user.id, botTools().getMsg("WRONG_NUMBER", user)))
+    }
+
+    override fun sendRateMsg(user: User, operator: User, session: Session) {
+        bot().execute(
+            SendMessage(
+                user.id,
+                botTools().getMsg("OPERATOR_STOPPED_CHAT", operator) + "\n" +
+                        botTools().getMsg("PLEASE_RATE_OPERATOR_WORK", operator)
+            ).replyMarkup(
+                InlineKeyboardMarkup(
+                    InlineKeyboardButton("1").callbackData("rateS1" + session.id),
+                    InlineKeyboardButton("2").callbackData("rateS2" + session.id),
+                    InlineKeyboardButton("3").callbackData("rateS3" + session.id),
+                    InlineKeyboardButton("4").callbackData("rateS4" + session.id),
+                    InlineKeyboardButton("5").callbackData("rateS5" + session.id)
+                )
+            )
+        )
+    }
+
+    override fun sendChatStoppedMsg(operator: User) {
+        bot().execute(
+            SendMessage(operator.id, botTools().getMsg("CHAT_STOPPED", operator).htmlBold())
+                .parseMode(ParseMode.HTML)
+        )
+    }
+
+    override fun sendWorkPausedMsg(operator: User) {
+        bot().execute(
+            SendMessage(operator.id, botTools().getMsg("WORK_PAUSED", operator).htmlBold())
+                .replyMarkup(
+                    ReplyKeyboardMarkup(
+                        KeyboardButton(botTools().getMsg("CONTINUE_WORK", operator)),
+                        KeyboardButton(botTools().getMsg("END_WORK", operator))
+                    ).resizeKeyboard(true)
+                ).parseMode(ParseMode.HTML)
+        )
+    }
+
+    override fun sendWorkEndedMsg(operator: User) {
+        bot().execute(
+            SendMessage(operator.id, botTools().getMsg("WORK_ENDED", operator))
+                .replyMarkup(
+                    ReplyKeyboardMarkup(
+                        KeyboardButton(botTools().getMsg("START_WORK", operator))
+                    ).resizeKeyboard(true)
+                )
+        )
+    }
+
+    override fun sendWorkStartedMsg(operator: User) {
+        bot().execute(
+            SendMessage(operator.id, botTools().getMsg("WORK_STARTED", operator))
+                .replyMarkup(
+                    ReplyKeyboardMarkup(
+                        KeyboardButton(botTools().getMsg("START_WORK", operator))
+                    ).resizeKeyboard(true)
+                )
+        )
+    }
+
+    override fun sendWorkContinuedMsg(operator: User) {
+        bot().execute(SendMessage(operator.id, botTools().getMsg("WORK_CONTINUED", operator)))
+    }
+
+    override fun sendSearchingUserMsg(operator: User) {
+        botTools().getMsg("SEARCHING_USER", operator).htmlBold()
+    }
 
     //translate functions
     override fun getMsg(key: String, user: User): String {
@@ -242,5 +331,31 @@ class BotToolsImpl(
             if (bundle.getString(key) == value)
                 return key
         return ""
+    }
+    override fun sendChooseLangMsg(user: User) {
+        bot().execute(
+            SendMessage(user.id, "Choose language")
+                .replyMarkup(
+                    InlineKeyboardMarkup(
+                        InlineKeyboardButton(text = "🇺🇸", callbackData = "setLangEN"),
+                        InlineKeyboardButton(text = "🇷🇺", callbackData = "setLangRU"),
+                        InlineKeyboardButton(text = "🇺🇿", callbackData = "setLangUZ")
+                    )
+                )
+        )
+        user.state = UserState.CHOOSE_LANG
+        userRepository.save(user)
+    }
+    override fun sendSharePhoneMsg(user: User) {
+        bot().execute(
+            SendMessage(user.id, getMsg("CLICK_TO_SEND_YOUR_PHONE", user))
+                .replyMarkup(
+                    ReplyKeyboardMarkup(
+                        KeyboardButton(getMsg("SHARE_PHONE_NUMBER", user)).requestContact(true)
+                    ).resizeKeyboard(true)
+                )
+        )
+        user.state = UserState.SEND_PHONE_NUMBER
+        userRepository.save(user)
     }
 }
