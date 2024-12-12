@@ -180,7 +180,8 @@ class MyBot(
                         }
                     }
                 }
-            }else if (update.editedMessage() != null) {
+            }
+            update.editedMessage()?.run {
                 val editedMessage = update.editedMessage()
                 val chatId = editedMessage.from().id()
                 val messageId = editedMessage.messageId()
@@ -192,12 +193,13 @@ class MyBot(
                 } catch (e: Exception) {
                     println("Error while editing message: ${e.message}")
                 }
-            } else if (update.callbackQuery() != null) {
-                val callbackQuery = update.callbackQuery()
-                val tgUser = callbackQuery.from()
-                val user = botService.getUser(tgUser)
-                val chatId = tgUser.id()
             }
+//            } else if (update.callbackQuery() != null) {
+//                val callbackQuery = update.callbackQuery()
+//                val tgUser = callbackQuery.from()
+//                val user = botService.getUser(tgUser)
+//                val chatId = tgUser.id()
+//            }
             update.callbackQuery()?.let { callbackQuery ->
                 val user = botService.getUser(callbackQuery.from())
                 val chatId = user.id
@@ -234,18 +236,18 @@ class MyBot(
                     bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                 }
             }
-            update.editedMessage()?.let { editedMessage ->
-                val user = botService.getUser(editedMessage.from())
-                val chatId = user.id
-                val messageId = editedMessage.messageId()
-
-                editedMessage.caption()?.let { caption ->
-                    botService.editMessage(chatId, messageId, editedMessage.captionEntities(), newCaption = caption)
-                }
-                editedMessage.text()?.let { text ->
-                    botService.editMessage(chatId, messageId, editedMessage.entities(), newText = text)
-                }
-            }
+//            update.editedMessage()?.let { editedMessage ->
+//                val user = botService.getUser(editedMessage.from())
+//                val chatId = user.id
+//                val messageId = editedMessage.messageId()
+//
+//                editedMessage.caption()?.let { caption ->
+//                    botService.editMessage(chatId, messageId, editedMessage.captionEntities(), newCaption = caption)
+//                }
+//                editedMessage.text()?.let { text ->
+//                    botService.editMessage(chatId, messageId, editedMessage.entities(), newText = text)
+//                }
+//            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
