@@ -15,13 +15,13 @@ class WebMvcConfig : WebMvcConfigurer {
     @Bean
     fun errorMessageSource() = ResourceBundleMessageSource().apply {
         setDefaultEncoding(Charsets.UTF_8.name())
-        setBasename("error")
+        setBasename("errors")
     }
 
 
-    @Bean
-    fun messageSource() = ResourceBundleMessageSource().apply {
-        setDefaultEncoding(Charsets.UTF_8.name())
-        setBasename("message")
-    }
+//    @Bean
+//    fun messageSource() = ResourceBundleMessageSource().apply {
+//        setDefaultEncoding(Charsets.UTF_8.name())
+//        setBasename("messages")
+//    }
 }

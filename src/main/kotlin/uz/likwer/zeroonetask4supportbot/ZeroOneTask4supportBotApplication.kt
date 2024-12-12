@@ -9,28 +9,27 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.scheduling.annotation.EnableScheduling
 import uz.likwer.zeroonetask4supportbot.backend.BaseRepositoryImpl
 
-@EnableJpaAuditing
-@EnableScheduling
 @SpringBootApplication
 @EnableJpaRepositories(
-    basePackages = ["uz.likwer.zeroonetask4supportbot.backend"],
+    basePackages = ["uz.likwer.zeroonetask4supportbot"],
     repositoryBaseClass = BaseRepositoryImpl::class
 )
-class ZeroOneTask4supportBotApplication
+@EnableJpaAuditing
+@EnableScheduling
+class ZeroOneTask4supportBotApplication {
+
+    @Bean
+    fun messageSource(): ResourceBundleMessageSource {
+        val messageSource = ResourceBundleMessageSource()
+        messageSource.setBasenames("messages")
+        messageSource.setDefaultEncoding("UTF-8")
+        messageSource.setFallbackToSystemLocale(false)
+        messageSource.setUseCodeAsDefaultMessage(true)
+        return messageSource
+    }
+
+}
 
 fun main(args: Array<String>) {
     runApplication<ZeroOneTask4supportBotApplication>(*args)
-
-    // TODO
-    // Tillarga ajratib chiqish
-}
-
-@Bean
-fun messageSource(): ResourceBundleMessageSource {
-    val messageSource = ResourceBundleMessageSource()
-    messageSource.setBasenames("messages", "errors")
-    messageSource.setDefaultEncoding("UTF-8")
-    messageSource.setFallbackToSystemLocale(false)
-    messageSource.setUseCodeAsDefaultMessage(true)
-    return messageSource
 }

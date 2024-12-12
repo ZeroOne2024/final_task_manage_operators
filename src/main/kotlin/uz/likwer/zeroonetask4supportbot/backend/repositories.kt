@@ -200,7 +200,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         "SELECT s FROM sessions s " +
                 "WHERE s.operator.id = :operatorId " +
-                "ORDER BY s.createdDate DESC"
+                "ORDER BY s.createdDate DESC LIMIT 1"
     )
     fun findLastSessionByOperatorId(@Param("operatorId") operatorId: Long): Session?
     fun findByOperatorIdAndStatus(operatorId: Long, status: SessionStatus): Session?

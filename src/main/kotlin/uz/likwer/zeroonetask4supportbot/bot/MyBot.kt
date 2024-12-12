@@ -56,6 +56,7 @@ class MyBot(
                 val chatId = tgUser.id()
 
                 bot.execute(SendChatAction(chatId, ChatAction.typing))
+
                 if (user.state != UserState.ACTIVE_USER) {
                     if (message.text() != null) {
                         val text = message.text()
@@ -81,16 +82,16 @@ class MyBot(
 
                         if (user.state == UserState.SEND_PHONE_NUMBER) {
                             if (contact.userId() != chatId) {
-                                bot.execute(SendMessage(chatId, "wrong number"))
+                                bot.execute(SendMessage(chatId, botTools.getMsg("WRONG_NUMBER", user)))
                             } else {
                                 user.phoneNumber = phoneNumber
-                                bot.execute(SendMessage(chatId, "Send your full name"))
+                                bot.execute(SendMessage(chatId, botTools.getMsg("SEND_YOUR_FULL_NAME", user)))
                                 user.state = UserState.SEND_FULL_NAME
                                 userRepository.save(user)
 
                                 if (user.state == UserState.SEND_PHONE_NUMBER) {
                                     user.phoneNumber = phoneNumber
-                                    bot.execute(SendMessage(chatId, "Send your full name"))
+                                    bot.execute(SendMessage(chatId, botTools.getMsg("SEND_YOUR_FULL_NAME", user)))
                                     user.state = UserState.SEND_FULL_NAME
                                     userRepository.save(user)
                                 }
@@ -118,19 +119,20 @@ class MyBot(
                     if (user.operatorStatus != null) {
 
                         if (text != null) {
-                            if (text.equals("Stop chat ❌")) {
+                            val msgKey = botTools.getMsgKeyByValue(text, user)
+                            if (msgKey == "STOP_CHAT") {
                                 botTools.stopChat(user)
                                 return
-                            } else if (text.equals("Next user ➡️")) {
+                            } else if (msgKey == "NEXT_USER") {
                                 botTools.nextUser(user)
                                 return
-                            } else if (text.equals("Short break ▶️")) {
+                            } else if (msgKey == "SHORT_BREAK") {
                                 botTools.breakOperator(user)
                                 return
-                            } else if (text.equals("Continue work ⏸️")) {
+                            } else if (msgKey == "CONTINUE_WORK") {
                                 botTools.continueWork(user)
                                 return
-                            } else if (text.equals("End work 🏠")) {
+                            } else if (msgKey == "END_WORK") {
                                 botTools.endWork(user)
                                 return
                             }
@@ -207,7 +209,7 @@ class MyBot(
                     val sessionId = data.substring(1).toLong()
 
                     botService.setRate(sessionId, rate)
-                    bot.execute(AnswerCallbackQuery(callbackQuery.id()).text("Thank you❤️").showAlert(true))
+                    bot.execute(AnswerCallbackQuery(callbackQuery.id()).text(botTools.getMsg("THANK_YOU", user)).showAlert(true))
                     bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                 }
             }

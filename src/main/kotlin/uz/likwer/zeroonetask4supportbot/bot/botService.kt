@@ -60,10 +60,10 @@ class BotService(
 
     fun askPhone(user: User) {
         bot().execute(
-            SendMessage(user.id, "Click 👇 to send your phone")
+            SendMessage(user.id, botTools.getMsg("CLICK_TO_SEND_YOUR_PHONE", user))
                 .replyMarkup(
                     ReplyKeyboardMarkup(
-                        KeyboardButton("Share phone number").requestContact(true)
+                        KeyboardButton(botTools.getMsg("SHARE_PHONE_NUMBER", user)).requestContact(true)
                     ).resizeKeyboard(true)
                 )
         )
@@ -112,16 +112,16 @@ class BotService(
             }
 
             MessageType.CONTACT -> {
-                val contact = message.contact
-                    ?: throw IllegalArgumentException("Contact information is missing")
+                val contact = message.contact!!
+//                    ?: throw IllegalArgumentException("Contact information is missing")
                 val sendContact = SendContact(chatId, contact.phone, contact.name)
                 replyMessageId?.let { sendContact.replyToMessageId(it) }
                 bot().execute(sendContact).message()
             }
 
             MessageType.LOCATION -> {
-                val location = message.location
-                    ?: throw IllegalArgumentException("Location information is missing")
+                val location = message.location!!
+//                    ?: throw IllegalArgumentException("Location information is missing")
                 val sendLocation = SendLocation(chatId, location.latitude, location.longitude)
                 replyMessageId?.let { sendLocation.replyToMessageId(it) }
                 bot().execute(sendLocation).message()
@@ -244,13 +244,13 @@ class BotService(
         val session = sessionRepository.findLastSessionByUserId(user.id)
         return if (session != null) {
             if (session.status == SessionStatus.CLOSED) {
-                bot().execute(SendMessage(user.id, "tez orada operator sizga javob beradi ⌚"))
+                bot().execute(SendMessage(user.id, botTools.getMsg("THE_OPERATOR_WILL_ANSWER_YOU_SOON", user)))
                 user.let { sessionRepository.save(Session(it)) }
             } else {
                 session
             }
         } else {
-            bot().execute(SendMessage(user.id, "tez orada operator sizga javob beradi ⌚"))
+            bot().execute(SendMessage(user.id, botTools.getMsg("THE_OPERATOR_WILL_ANSWER_YOU_SOON", user)))
             user.let { sessionRepository.save(Session(it)) }
         }
     }
@@ -292,19 +292,19 @@ class BotService(
                     val saved = userRepository.save(activeOperator)
 
                     bot().execute(
-                        SendMessage(activeOperator.id, "User: " + session.user.fullName)
+                        SendMessage(activeOperator.id, botTools.getMsg("USER", activeOperator)+": " + session.user.fullName)
                             .entities(
                                 MessageEntity(
                                     MessageEntity.Type.text_mention,
-                                    "User: ".length,
+                                    (botTools.getMsg("USER", activeOperator)+": ").length,
                                     session.user.fullName.length
                                 )
                                     .user(com.pengrad.telegrambot.model.User(session.user.id))
                             ).replyMarkup(
                                 ReplyKeyboardMarkup(
-                                    KeyboardButton("Stop chat ❌"),
-                                    KeyboardButton("Next user ➡️"),
-                                    KeyboardButton("Short break ▶️"),
+                                    KeyboardButton(botTools.getMsg("STOP_CHAT", activeOperator)),
+                                    KeyboardButton(botTools.getMsg("NEXT_USER", activeOperator)),
+                                    KeyboardButton(botTools.getMsg("SHORT_BREAK", activeOperator)),
 //                                                    KeyboardButton("To another operator 📁")
                                 ).resizeKeyboard(true)
                             )

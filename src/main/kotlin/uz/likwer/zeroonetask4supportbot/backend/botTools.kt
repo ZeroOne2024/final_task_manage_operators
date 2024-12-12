@@ -38,6 +38,7 @@ class BotToolsImpl(
     fun bot(): TelegramBot {
         return Utils.telegramBot()
     }
+
     fun botTools(): BotTools {
         return Utils.botTools()
     }
@@ -128,7 +129,13 @@ class BotToolsImpl(
             userRepository.save(user)
             userRepository.save(operator)
             bot().execute(
-                SendMessage(user.id, "Operator stopped the chat\nPlease rate operator's work")
+                SendMessage(
+                    user.id,
+                    botTools().getMsg(
+                        "OPERATOR_STOPPED_CHAT",
+                        operator
+                    ) + botTools().getMsg("PLEASE_RATE_OPERATOR_WORK", operator)
+                )
                     .replyMarkup(
                         InlineKeyboardMarkup(
                             InlineKeyboardButton("1").callbackData("rateS1" + session.id),
@@ -139,7 +146,11 @@ class BotToolsImpl(
                         )
                     )
             )
-            bot().execute(SendMessage(user.id, botTools().getMsg("ASK_YOUR_QUESTION", user)).replyMarkup(ReplyKeyboardRemove()))
+            bot().execute(
+                SendMessage(user.id, botTools().getMsg("ASK_YOUR_QUESTION", user)).replyMarkup(
+                    ReplyKeyboardRemove()
+                )
+            )
         }
     }
 
@@ -149,11 +160,11 @@ class BotToolsImpl(
             operator.operatorStatus = OperatorStatus.PAUSED
             userRepository.save(operator)
             bot().execute(
-                SendMessage(operator.id, "Work paused")
+                SendMessage(operator.id, botTools().getMsg("WORK_PAUSED", operator))
                     .replyMarkup(
                         ReplyKeyboardMarkup(
-                            KeyboardButton("Continue work ⏸️"),
-                            KeyboardButton("End work 🏠")
+                            KeyboardButton(botTools().getMsg("CONTINUE_WORK", operator)),
+                            KeyboardButton(botTools().getMsg("END_WORK", operator))
                         )
                     )
             )
@@ -164,7 +175,7 @@ class BotToolsImpl(
         if (operator.operatorStatus != OperatorStatus.BUSY) {
             operator.operatorStatus = OperatorStatus.ACTIVE
             userRepository.save(operator)
-            bot().execute(SendMessage(operator.id, "Work continued"))
+            bot().execute(SendMessage(operator.id, botTools().getMsg("WORK_CONTINUED", operator)))
         }
     }
 
@@ -173,10 +184,10 @@ class BotToolsImpl(
             operator.operatorStatus = OperatorStatus.INACTIVE
             userRepository.save(operator)
             bot().execute(
-                SendMessage(operator.id, "Work ended 🏠")
+                SendMessage(operator.id, botTools().getMsg("WORK_ENDED", operator))
                     .replyMarkup(
                         ReplyKeyboardMarkup(
-                            KeyboardButton("Start work ✅")
+                            KeyboardButton(botTools().getMsg("START_WORK", operator))
                         )
                     )
             )
@@ -191,6 +202,7 @@ class BotToolsImpl(
     //translate functions
     override fun getMsg(key: String, user: User): String {
         val locale = Locale.forLanguageTag(user.languages[0].name.lowercase())
+        messageSource.setBasenames("messages")
         return messageSource.getMessage(key, null, locale)
     }
 

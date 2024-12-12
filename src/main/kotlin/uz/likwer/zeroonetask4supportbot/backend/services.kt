@@ -1,10 +1,8 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
-import jakarta.transaction.Transactional
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
-
 
 interface UserService {
 
@@ -94,7 +92,6 @@ class SessionServiceImpl(
             .orElseThrow { SessionNotFoundExistException() }
         return toSessionInfo(session)
     }
-
 
 
     override fun getAllSessionUser(userId: Long, pageable: Pageable): Page<SessionInfo> {
