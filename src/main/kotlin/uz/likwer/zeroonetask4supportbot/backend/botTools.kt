@@ -98,6 +98,7 @@ class BotToolsImpl(
                 "SHORT_BREAK" -> breakOperator(user)
                 "CONTINUE_WORK" -> continueWork(user)
                 "END_WORK" -> endWork(user)
+                "START_WORK" -> startWork(user)
                 else -> return false
             }
             true
@@ -200,7 +201,6 @@ class BotToolsImpl(
 
             sendSearchingUserMsg(operator)
             sendWorkStartedMsg(operator)
-
         }
     }
 
