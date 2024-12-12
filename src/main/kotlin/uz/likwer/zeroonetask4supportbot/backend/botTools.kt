@@ -7,8 +7,8 @@ import com.pengrad.telegrambot.model.request.KeyboardButton
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup
 import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove
 import com.pengrad.telegrambot.request.SendMessage
+import org.springframework.context.MessageSource
 import org.springframework.stereotype.Service
-import uz.likwer.zeroonetask4supportbot.bot.CustomMessageSource
 import uz.likwer.zeroonetask4supportbot.bot.Utils
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -33,7 +33,7 @@ interface BotTools {
 class BotToolsImpl(
     private val userRepository: UserRepository,
     private val sessionRepository: SessionRepository,
-    private val messageSource: CustomMessageSource,
+    private val messageSource: MessageSource,
 ) : BotTools {
     fun bot(): TelegramBot {
         return Utils.telegramBot()
@@ -202,18 +202,15 @@ class BotToolsImpl(
     //translate functions
     override fun getMsg(key: String, user: User): String {
         val locale = Locale.forLanguageTag(user.languages[0].name.lowercase())
-        messageSource.setBasenames("messages")
         return messageSource.getMessage(key, null, locale)
     }
 
     override fun getMsgKeyByValue(value: String, user: User): String {
         val locale = Locale.forLanguageTag(user.languages[0].name.lowercase())
-        val bundle = messageSource.getBundle("messages", locale)
-        bundle?.let {
-            for (key in it.keySet())
-                if (it.getString(key) == value)
-                    return key
-        }
+        val bundle = ResourceBundle.getBundle("messages", locale)
+        for (key in bundle.keySet())
+            if (bundle.getString(key) == value)
+                return key
         return ""
     }
 }

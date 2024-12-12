@@ -17,7 +17,6 @@ import uz.likwer.zeroonetask4supportbot.backend.BaseRepositoryImpl
 @EnableJpaAuditing
 @EnableScheduling
 class ZeroOneTask4supportBotApplication {
-
     @Bean
     fun messageSource(): ResourceBundleMessageSource {
         val messageSource = ResourceBundleMessageSource()
@@ -27,7 +26,6 @@ class ZeroOneTask4supportBotApplication {
         messageSource.setUseCodeAsDefaultMessage(true)
         return messageSource
     }
-
 }
 
 fun main(args: Array<String>) {

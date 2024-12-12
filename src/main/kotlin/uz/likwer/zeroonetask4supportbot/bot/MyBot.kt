@@ -111,49 +111,47 @@ class MyBot(
                     val contact = message.contact()?.let {
                         contactRepository.save(Contact(it.firstName(), it.phoneNumber()))
                     }
-                    val dice=message.dice()?.let{
-                        diceRepository.save(Dice(it.value(),it.emoji()))
+                    val dice = message.dice()?.let {
+                        diceRepository.save(Dice(it.value(), it.emoji()))
                     }
 
 
                     if (user.operatorStatus != null) {
 
+                        var isCommand = true
                         if (text != null) {
                             val msgKey = botTools.getMsgKeyByValue(text, user)
                             if (msgKey == "STOP_CHAT") {
                                 botTools.stopChat(user)
-                                return
                             } else if (msgKey == "NEXT_USER") {
                                 botTools.nextUser(user)
-                                return
                             } else if (msgKey == "SHORT_BREAK") {
                                 botTools.breakOperator(user)
-                                return
                             } else if (msgKey == "CONTINUE_WORK") {
                                 botTools.continueWork(user)
-                                return
                             } else if (msgKey == "END_WORK") {
                                 botTools.endWork(user)
-                                return
-                            }
+                            } else isCommand = false
                         }
-                        val session = botService.getOperatorSession(chatId)
-                        session?.let {
-                            val newMessage = Messages(
-                                user = session.operator!!,
-                                session = session,
-                                messageId = messageId,
-                                replyMessageId = messageReplyId,
-                                messageType = typeAndFileId.first,
-                                text = text,
-                                caption = caption,
-                                fileId = typeAndFileId.second,
-                                location = location,
-                                contact = contact,
-                                dice = dice,
-                            )
-                            val savedMessage = messageRepository.save(newMessage)
-                            botService.sendMessageToUser(session.user, savedMessage, session)
+                        if (!isCommand){
+                            val session = botService.getOperatorSession(chatId)
+                            session?.let {
+                                val newMessage = Messages(
+                                    user = session.operator!!,
+                                    session = session,
+                                    messageId = messageId,
+                                    replyMessageId = messageReplyId,
+                                    messageType = typeAndFileId.first,
+                                    text = text,
+                                    caption = caption,
+                                    fileId = typeAndFileId.second,
+                                    location = location,
+                                    contact = contact,
+                                    dice = dice,
+                                )
+                                val savedMessage = messageRepository.save(newMessage)
+                                botService.sendMessageToUser(session.user, savedMessage, session)
+                            }
                         }
                     } else {
                         val sessionOpt = botService.getSession(user)
@@ -209,7 +207,9 @@ class MyBot(
                     val sessionId = data.substring(1).toLong()
 
                     botService.setRate(sessionId, rate)
-                    bot.execute(AnswerCallbackQuery(callbackQuery.id()).text(botTools.getMsg("THANK_YOU", user)).showAlert(true))
+                    bot.execute(
+                        AnswerCallbackQuery(callbackQuery.id()).text(botTools.getMsg("THANK_YOU", user)).showAlert(true)
+                    )
                     bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                 }
             }
