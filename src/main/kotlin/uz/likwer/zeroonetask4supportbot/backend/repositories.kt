@@ -55,7 +55,8 @@ class BaseRepositoryImpl<T : BaseEntity>(
         return save(t).apply { entityManager.refresh(this) }
     }
 }
-interface DiceRepository : BaseRepository<Dice>{}
+
+interface DiceRepository : BaseRepository<Dice> {}
 
 interface UserRepository : JpaRepository<User, Long> {
     fun existsByRole(role: UserRole): Boolean
@@ -212,4 +213,6 @@ interface SessionRepository : BaseRepository<Session> {
 
 interface LocationRepository : BaseRepository<Location>
 interface ContactRepository : BaseRepository<Contact>
-interface DoubleOperatorRepository : BaseRepository<DoubleOperator>
+interface DoubleOperatorRepository : BaseRepository<DoubleOperator> {
+    fun existsByOperatorIdAndSessionId(operatorId: Long, sessionId: Long): Boolean
+}

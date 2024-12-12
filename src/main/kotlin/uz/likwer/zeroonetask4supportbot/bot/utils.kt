@@ -39,5 +39,25 @@ class Utils {
                 this
             }
         }
+
+        fun String.htmlBold(): String {
+            return "<b>$this</b>"
+        }
+
+        fun String.htmlItalic(): String {
+            return "<i>$this</i>"
+        }
+
+        fun String.htmlA(href: String): String {
+            return "<a href=\"$href\">$this</a>"
+        }
+
+        fun String.htmlUnderline(): String {
+            return "<u>$this</u>"
+        }
+
+        fun String.htmlStrikeThrough(): String {
+            return "<s>$this</s>"
+        }
     }
 }

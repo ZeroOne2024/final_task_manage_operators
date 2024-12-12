@@ -38,7 +38,12 @@ class User(
     @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole? = UserRole.USER,
-) : BaseUserEntity()
+    var msgIdSearchingUser:Int?=null,
+) : BaseUserEntity() {
+    fun isOperator(): Boolean {
+        return role == UserRole.OPERATOR
+    }
+}
 
 
 @Entity(name = "messages")

@@ -1,6 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.bot
 
 import com.pengrad.telegrambot.TelegramBot
+import com.pengrad.telegrambot.model.LinkPreviewOptions
 import com.pengrad.telegrambot.model.MessageEntity
 import com.pengrad.telegrambot.model.request.*
 import com.pengrad.telegrambot.request.*
@@ -41,34 +42,6 @@ class BotService(
 
     fun bot(): TelegramBot {
         return Utils.telegramBot()
-    }
-
-    fun sendChooseLangMsg(user: User) {
-        bot().execute(
-            SendMessage(user.id, "Choose language")
-                .replyMarkup(
-                    InlineKeyboardMarkup(
-                        InlineKeyboardButton(text = "🇺🇸", callbackData = "setLangEN"),
-                        InlineKeyboardButton(text = "🇷🇺", callbackData = "setLangRU"),
-                        InlineKeyboardButton(text = "🇺🇿", callbackData = "setLangUZ")
-                    )
-                )
-        )
-        user.state = UserState.CHOOSE_LANG
-        userRepository.save(user)
-    }
-
-    fun askPhone(user: User) {
-        bot().execute(
-            SendMessage(user.id, botTools.getMsg("CLICK_TO_SEND_YOUR_PHONE", user))
-                .replyMarkup(
-                    ReplyKeyboardMarkup(
-                        KeyboardButton(botTools.getMsg("SHARE_PHONE_NUMBER", user)).requestContact(true)
-                    ).resizeKeyboard(true)
-                )
-        )
-        user.state = UserState.SEND_PHONE_NUMBER
-        userRepository.save(user)
     }
 
     fun sendMessageToUser(user: User, message: Messages, session: Session) {
@@ -113,7 +86,6 @@ class BotService(
 
             MessageType.CONTACT -> {
                 val contact = message.contact!!
-//                    ?: throw IllegalArgumentException("Contact information is missing")
                 val sendContact = SendContact(chatId, contact.phone, contact.name)
                 replyMessageId?.let { sendContact.replyToMessageId(it) }
                 bot().execute(sendContact).message()
@@ -121,7 +93,6 @@ class BotService(
 
             MessageType.LOCATION -> {
                 val location = message.location!!
-//                    ?: throw IllegalArgumentException("Location information is missing")
                 val sendLocation = SendLocation(chatId, location.latitude, location.longitude)
                 replyMessageId?.let { sendLocation.replyToMessageId(it) }
                 bot().execute(sendLocation).message()
@@ -169,58 +140,55 @@ class BotService(
         messageRepository.save(message)
     }
 
-    fun editMessage(chatId: Long, messageId: Int, newText: String?, newCaption: String?) {
-        // Retrieve the message from the database
-        val message = messageRepository.findByUserIdAndMessageId(chatId,messageId)
-            ?: throw IllegalArgumentException("Message with ID $messageId not found")
+    fun editMessage(
+        chatId: Long,
+        messageId: Int,
+        entities: Array<MessageEntity>,
+        newText: String? = null,
+        newCaption: String? = null
+    ) {
+        val messageOpt = messageRepository.findByUserIdAndMessageId(chatId, messageId)
+        messageOpt?.let { message ->
+            val fileList = listOf(
+                MessageType.PHOTO,
+                MessageType.VIDEO,
+                MessageType.DOCUMENT,
+                MessageType.ANIMATION
+            )
 
-        if (message.messageBotId != null) {
-            if (!newText.isNullOrBlank() && message.messageType == MessageType.TEXT) {
-                message.text = newText
+            if (message.messageBotId != null) {
+                newText?.let { text ->
+                    if (message.messageType == MessageType.TEXT) {
+                        message.text = newText
 
-                if (message.session.user.id == chatId) {
-                    val editMessage = EditMessageText(message.session.operator?.id, message.messageBotId!!, newText)
-                    bot().execute(editMessage)
-                } else {
-                    val editMessage = EditMessageText(message.session.user.id, message.messageBotId!!, newText)
-                    bot().execute(editMessage)
+                        val editMessage = if (message.session.user.id == chatId)
+                            EditMessageText(message.session.operator!!.id, message.messageBotId!!, text)
+                        else EditMessageText(message.session.user.id, message.messageBotId!!, text)
+                        bot().execute(editMessage)
+                    }
+                }
+
+                newCaption?.let { caption ->
+                    if (message.messageType in fileList) {
+                        message.caption = caption
+                        val editMessage = if (message.session.user.id == chatId)
+                            EditMessageCaption(message.session.operator?.id, message.messageBotId!!).caption(caption)
+                        else EditMessageCaption(message.session.user.id, message.messageBotId!!).caption(caption)
+                        bot().execute(editMessage)
+                    }
+                }
+            } else {
+                newText?.let { text ->
+                    if (message.messageType == MessageType.TEXT)
+                        message.text = text
+                }
+                newCaption?.let { caption ->
+                    if (message.messageType in fileList)
+                        message.caption = caption
                 }
             }
-
-            if (!newCaption.isNullOrBlank() && message.messageType in listOf(
-                    MessageType.PHOTO,
-                    MessageType.VIDEO,
-                    MessageType.DOCUMENT,
-                    MessageType.ANIMATION
-                )
-            ) {
-                message.caption = newCaption
-                if (message.session.user.id == chatId) {
-                    val editMessage =
-                        EditMessageCaption(message.session.operator?.id, message.messageBotId!!).caption(newCaption)
-                    bot().execute(editMessage)
-                } else {
-                    val editMessage =
-                        EditMessageCaption(message.session.user.id, message.messageBotId!!).caption(newCaption)
-                    bot().execute(editMessage)
-                }
-            }
-        }else{
-            if (!newText.isNullOrBlank() && message.messageType == MessageType.TEXT) {
-                message.text = newText
-            }
-            if (!newCaption.isNullOrBlank() && message.messageType in listOf(
-                    MessageType.PHOTO,
-                    MessageType.VIDEO,
-                    MessageType.DOCUMENT,
-                    MessageType.ANIMATION
-                )
-            ){
-             message.caption = newCaption
-            }
+            messageRepository.save(message)
         }
-
-        messageRepository.save(message)
     }
 
     @Synchronized
@@ -274,6 +242,35 @@ class BotService(
     }
 
 
+    private fun sendUserInfoForOperator(operator: User, user: User) {
+        val replyKeyboardMarkup = ReplyKeyboardMarkup(
+            KeyboardButton(botTools.getMsg("STOP_CHAT", operator))
+        ).addRow(
+            KeyboardButton(botTools.getMsg("NEXT_USER", operator)),
+            KeyboardButton(botTools.getMsg("TO_ANOTHER_OPERATOR", operator))
+        ).addRow(KeyboardButton(botTools.getMsg("SHORT_BREAK", operator)))
+            .resizeKeyboard(true)
+        val messageEntity = if (user.username.isEmpty())
+            MessageEntity(
+                MessageEntity.Type.text_mention,
+                (botTools.getMsg("USER", operator) + ": ").length,
+                user.fullName.length
+            ).user(com.pengrad.telegrambot.model.User(user.id))
+        else
+            MessageEntity(
+                MessageEntity.Type.text_link,
+                (botTools.getMsg("USER", operator) + ": ").length,
+                user.fullName.length
+            ).url("t.me/" + user.username)
+        bot().execute(
+            SendMessage(operator.id, botTools.getMsg("USER", operator) + ": " + user.fullName)
+                .entities(messageEntity)
+                .linkPreviewOptions(LinkPreviewOptions().isDisabled(true))
+                .replyMarkup(replyKeyboardMarkup)
+
+        )
+    }
+
     @Scheduled(fixedDelay = 5_000)
     fun contactActiveOperatorScheduled() {
         val activeOperators = userRepository.findFirstActiveOperator(UserRole.OPERATOR, OperatorStatus.ACTIVE)
@@ -291,24 +288,8 @@ class BotService(
                     activeOperator.operatorStatus = OperatorStatus.BUSY
                     val saved = userRepository.save(activeOperator)
 
-                    bot().execute(
-                        SendMessage(activeOperator.id, botTools.getMsg("USER", activeOperator)+": " + session.user.fullName)
-                            .entities(
-                                MessageEntity(
-                                    MessageEntity.Type.text_mention,
-                                    (botTools.getMsg("USER", activeOperator)+": ").length,
-                                    session.user.fullName.length
-                                )
-                                    .user(com.pengrad.telegrambot.model.User(session.user.id))
-                            ).replyMarkup(
-                                ReplyKeyboardMarkup(
-                                    KeyboardButton(botTools.getMsg("STOP_CHAT", activeOperator)),
-                                    KeyboardButton(botTools.getMsg("NEXT_USER", activeOperator)),
-                                    KeyboardButton(botTools.getMsg("SHORT_BREAK", activeOperator)),
-//                                                    KeyboardButton("To another operator 📁")
-                                ).resizeKeyboard(true)
-                            )
-                    )
+                    sendUserInfoForOperator(activeOperator, session.user)
+
                     for (message in queuedSession.messages) {
                         sendMessageToUser(saved, message, session)
                     }
