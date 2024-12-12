@@ -113,23 +113,9 @@ class MyBot(
 
                     if (user.operatorStatus != null) {
 
-                        val isCommand = text?.let { botTools.processCommand(it, user) } ?: false
-//                        var isCommand = true
-//                        if (text != null) {
-//                            val msgKey = botTools.getMsgKeyByValue(text, user)
-//                            if (msgKey == "STOP_CHAT") {
-//                                botTools.stopChat(user)
-//                            } else if (msgKey == "NEXT_USER") {
-//                                botTools.nextUser(user)
-//                            } else if (msgKey == "SHORT_BREAK") {
-//                                botTools.breakOperator(user)
-//                            } else if (msgKey == "CONTINUE_WORK") {
-//                                botTools.continueWork(user)
-//                            } else if (msgKey == "END_WORK") {
-//                                botTools.endWork(user)
-//                            } else isCommand = false
-//                        }
-                        if (!isCommand){
+                        val isCommand = botTools.processCommand(text, user)
+
+                        if (!isCommand) {
                             val session = botService.getOperatorSession(chatId)
                             session?.let {
                                 val newMessage = Messages(
@@ -175,7 +161,6 @@ class MyBot(
                                     savedMessage,
                                     session.user.languages[0].toString()
                                 )
-
                             }
                         }
                     }
@@ -188,18 +173,9 @@ class MyBot(
                 val newText = editedMessage.text()
                 val newCaption = editedMessage.caption()
 
-                try {
-                    botService.editMessage(chatId, messageId, newText, newCaption)
-                } catch (e: Exception) {
-                    println("Error while editing message: ${e.message}")
-                }
+                botService.editMessage(chatId, messageId, newText, newCaption)
             }
-//            } else if (update.callbackQuery() != null) {
-//                val callbackQuery = update.callbackQuery()
-//                val tgUser = callbackQuery.from()
-//                val user = botService.getUser(tgUser)
-//                val chatId = tgUser.id()
-//            }
+
             update.callbackQuery()?.let { callbackQuery ->
                 val user = botService.getUser(callbackQuery.from())
                 val chatId = user.id
@@ -236,18 +212,6 @@ class MyBot(
                     bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                 }
             }
-//            update.editedMessage()?.let { editedMessage ->
-//                val user = botService.getUser(editedMessage.from())
-//                val chatId = user.id
-//                val messageId = editedMessage.messageId()
-//
-//                editedMessage.caption()?.let { caption ->
-//                    botService.editMessage(chatId, messageId, editedMessage.captionEntities(), newCaption = caption)
-//                }
-//                editedMessage.text()?.let { text ->
-//                    botService.editMessage(chatId, messageId, editedMessage.entities(), newText = text)
-//                }
-//            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

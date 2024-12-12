@@ -25,8 +25,7 @@ interface BotTools {
     fun endWork(operator: User)
     fun getMsg(key: String, user: User): String
     fun getMsgKeyByValue(value: String, user: User): String
-    fun processCommand(text: String, user: User): Boolean
-
+    fun processCommand(text: String?, user: User): Boolean
     fun startWork(operator: User)
     fun sendAskYourQuestionMsg(user: User)
     fun sendWrongNumberMsg(user: User)
@@ -90,31 +89,19 @@ class BotToolsImpl(
     }
 
 
-    override fun processCommand(text: String, user: User): Boolean {
-        val msgKey = getMsgKeyByValue(text, user)
-        return when (msgKey) {
-            "STOP_CHAT" -> {
-                stopChat(user)
-                true
+    @Transactional
+    override fun processCommand(text: String?, user: User): Boolean {
+        return text?.let {
+            when (getMsgKeyByValue(text, user)) {
+                "STOP_CHAT" -> stopChat(user)
+                "NEXT_USER" -> nextUser(user)
+                "SHORT_BREAK" -> breakOperator(user)
+                "CONTINUE_WORK" -> continueWork(user)
+                "END_WORK" -> endWork(user)
+                else -> return false
             }
-            "NEXT_USER" -> {
-                nextUser(user)
-                true
-            }
-            "SHORT_BREAK" -> {
-                breakOperator(user)
-                true
-            }
-            "CONTINUE_WORK" -> {
-                continueWork(user)
-                true
-            }
-            "END_WORK" -> {
-                endWork(user)
-                true
-            }
-            else -> false
-        }
+            true
+        } ?: false
     }
 
 
@@ -226,10 +213,6 @@ class BotToolsImpl(
         }
     }
 
-    override fun nextUser(operator: User) {
-        //TODO
-    }
-
     override fun toAnotherOperator(operator: User) {
         val session = sessionRepository.findLastSessionByOperatorId(operator.id)
         session?.let {
@@ -332,6 +315,7 @@ class BotToolsImpl(
                 return key
         return ""
     }
+
     override fun sendChooseLangMsg(user: User) {
         bot().execute(
             SendMessage(user.id, "Choose language")
@@ -346,6 +330,7 @@ class BotToolsImpl(
         user.state = UserState.CHOOSE_LANG
         userRepository.save(user)
     }
+
     override fun sendSharePhoneMsg(user: User) {
         bot().execute(
             SendMessage(user.id, getMsg("CLICK_TO_SEND_YOUR_PHONE", user))
@@ -357,5 +342,9 @@ class BotToolsImpl(
         )
         user.state = UserState.SEND_PHONE_NUMBER
         userRepository.save(user)
+    }
+
+    override fun nextUser(operator: User) {
+        //TODO
     }
 }
