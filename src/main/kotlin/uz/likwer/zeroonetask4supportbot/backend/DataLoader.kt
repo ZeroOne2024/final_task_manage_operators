@@ -36,5 +36,37 @@ class DataLoader(
         val queueRu = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
     }
 
+    @Component
+    class LoadMessagesToQueues(
+        private val messageRepository: MessageRepository
+    ) : CommandLineRunner {
+        companion object {
+            val queueEn = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+            val queueUz = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+            val queueRu = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+        }
 
+        override fun run(vararg args: String?) {
+            val groupedMessages = messageRepository.findMessagesGroupedBySessionId()
+
+            val sessionMessagesMap = groupedMessages.groupBy {
+                it["sessionId"] as Long
+            }.mapValues { entry ->
+                entry.value.map { it["message"] as Messages }
+            }
+
+            sessionMessagesMap.forEach { (sessionId, messages) ->
+                val firstMessage = messages.firstOrNull() ?: return@forEach
+                val language = firstMessage.user.languages.firstOrNull() ?: Language.EN
+
+                val messagesList = CopyOnWriteArrayList(messages)
+
+                when (language) {
+                    Language.EN -> queueEn[sessionId] = messagesList
+                    Language.UZ -> queueUz[sessionId] = messagesList
+                    Language.RU -> queueRu[sessionId] = messagesList
+                }
+            }
+        }
+    }
 }

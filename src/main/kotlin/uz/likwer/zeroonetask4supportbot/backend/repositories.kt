@@ -1,6 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
 import jakarta.persistence.EntityManager
+import jakarta.persistence.Tuple
 import jakarta.transaction.Transactional
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -90,6 +91,15 @@ interface MessageRepository : BaseRepository<Messages> {
     fun findBySessionIdAndMessageBotId(sessionId: Long, messageBotId: Int): Messages?
     fun findBySessionIdAndMessageId(sessionId: Long, messageId: Int): Messages?
     fun findByUserIdAndMessageId(userId: Long, messageId: Int): Messages?
+
+    @Query("""
+        SELECT NEW map(m.session.id as sessionId, m as message)
+        FROM messages m
+        WHERE m.deleted = false
+        ORDER BY m.session.id ASC, m.id ASC
+    """)
+    fun findMessagesGroupedBySessionId(): List<Map<String, Any>>
+
 }
 
 interface SessionRepository : BaseRepository<Session> {
