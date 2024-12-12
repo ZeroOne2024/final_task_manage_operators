@@ -6,6 +6,7 @@ import com.pengrad.telegrambot.request.SendMessage
 import jakarta.transaction.Transactional
 import org.springframework.context.MessageSource
 import org.springframework.stereotype.Service
+import uz.likwer.zeroonetask4supportbot.bot.BotService
 import uz.likwer.zeroonetask4supportbot.bot.Utils
 import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.htmlBold
 import java.util.*
@@ -47,6 +48,7 @@ class BotToolsImpl(
     private val sessionRepository: SessionRepository,
     private val messageSource: MessageSource,
     private val doubleOperatorRepository: DoubleOperatorRepository,
+    private val botService: BotService,
 ) : BotTools {
 
     fun bot(): TelegramBot {
@@ -76,7 +78,7 @@ class BotToolsImpl(
 
             message.videoNote() != null -> Pair(MessageType.VIDEO, message.videoNote().fileId())
             message.voice() != null -> Pair(MessageType.VOICE, message.voice().fileId())
-            message.video() != null -> Pair(MessageType.VIDEO, message.video().fileId())
+            message.video() != null -> Pair(MessageType.VIDEO_NOTE, message.video().fileId())
             message.audio() != null -> Pair(MessageType.AUDIO, message.audio().fileId)
             message.contact() != null -> Pair(MessageType.CONTACT, null)
             message.location() != null -> Pair(MessageType.LOCATION, null)
@@ -98,6 +100,7 @@ class BotToolsImpl(
                 "SHORT_BREAK" -> breakOperator(user)
                 "CONTINUE_WORK" -> continueWork(user)
                 "END_WORK" -> endWork(user)
+                "START_WORK" -> startWork(user)
                 else -> return false
             }
             true
@@ -200,7 +203,6 @@ class BotToolsImpl(
 
             sendSearchingUserMsg(operator)
             sendWorkStartedMsg(operator)
-
         }
     }
 
@@ -298,7 +300,10 @@ class BotToolsImpl(
     }
 
     override fun sendSearchingUserMsg(operator: User) {
-        botTools().getMsg("SEARCHING_USER", operator).htmlBold()
+        bot().execute(
+            SendMessage(operator.id, botTools().getMsg("SEARCHING_USER", operator).htmlBold())
+                .parseMode(ParseMode.HTML)
+        )
     }
 
     //translate functions
@@ -345,6 +350,22 @@ class BotToolsImpl(
     }
 
     override fun nextUser(operator: User) {
-        //TODO
+
+        val session = sessionRepository.findByOperatorIdAndStatus(operator.id, SessionStatus.BUSY)
+        session?.let {
+
+            val user = it.user
+            operator.operatorStatus = OperatorStatus.ACTIVE
+            session.status = SessionStatus.CLOSED
+            user.state = UserState.ACTIVE_USER
+            userRepository.save(user)
+            sessionRepository.save(it)
+            userRepository.save(operator)
+
+            sendSearchingUserMsg(operator)
+            botService.contactActiveOperator(operator)
+
+        }
+
     }
 }

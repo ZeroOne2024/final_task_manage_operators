@@ -19,9 +19,8 @@ class Runner(
     private val diceRepository: DiceRepository,
 ) : CommandLineRunner {
 
-//     t.me/zero_one_support_bot
+    // t.me/zero_one_support_bot
     private val botToken: String = "7261395309:AAHu4Eqm4oEpgQOEA-J2uXJLWCBXJBkt1vI"
-//    private val botToken: String = "7848759727:AAEV8D5Gn1_28lly4GhhFyswgN5ySyDQZSk"
     val telegramBot = TelegramBot(botToken)
 
     override fun run(vararg args: String?) {

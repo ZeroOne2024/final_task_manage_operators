@@ -172,7 +172,7 @@ class BotService(
     @Transactional
     fun editMessage(chatId: Long, messageId: Int, newText: String?, newCaption: String?) {
 
-        val message = messageRepository.findByUserIdAndMessageId(chatId,messageId)
+        val message = messageRepository.findByUserIdAndMessageId(chatId, messageId)
             ?: throw IllegalArgumentException("Message with ID $messageId not found")
 
         if (!newText.isNullOrBlank() && message.messageType == MessageType.TEXT) {
@@ -299,23 +299,28 @@ class BotService(
         val activeOperators = userRepository.findFirstActiveOperator(UserRole.OPERATOR, OperatorStatus.ACTIVE)
 
         for (activeOperator in activeOperators) {
-            val queuedSession = botTools.getQueuedSession(activeOperator)
-            if (queuedSession != null) {
-                var session = sessionRepository.findByIdAndDeletedFalse(queuedSession.sessionId)
-                if (session != null) {
+           contactActiveOperator(activeOperator)
+        }
+    }
 
-                    session.operator = activeOperator
-                    session.status = SessionStatus.BUSY
-                    session = sessionRepository.save(session)
+    @Synchronized
+    fun contactActiveOperator(operator: User) {
+        val queuedSession = botTools.getQueuedSession(operator)
+        if (queuedSession != null) {
+            var session = sessionRepository.findByIdAndDeletedFalse(queuedSession.sessionId)
+            if (session != null) {
 
-                    activeOperator.operatorStatus = OperatorStatus.BUSY
-                    val saved = userRepository.save(activeOperator)
+                session.operator = operator
+                session.status = SessionStatus.BUSY
+                session = sessionRepository.save(session)
 
-                    sendUserInfoForOperator(activeOperator, session.user)
+                operator.operatorStatus = OperatorStatus.BUSY
+                val saved = userRepository.save(operator)
 
-                    for (message in queuedSession.messages) {
-                        sendMessageToUser(saved, message, session)
-                    }
+                sendUserInfoForOperator(operator, session.user)
+
+                for (message in queuedSession.messages) {
+                    sendMessageToUser(saved, message, session)
                 }
             }
         }
