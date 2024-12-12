@@ -40,11 +40,6 @@ class DataLoader(
     class LoadMessagesToQueues(
         private val messageRepository: MessageRepository
     ) : CommandLineRunner {
-        companion object {
-            val queueEn = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
-            val queueUz = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
-            val queueRu = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
-        }
 
         override fun run(vararg args: String?) {
             val groupedMessages = messageRepository.findMessagesGroupedBySessionId()
