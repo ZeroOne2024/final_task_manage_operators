@@ -169,54 +169,47 @@ class BotService(
     }
 
 
-    fun editMessage(
-        chatId: Long,
-        messageId: Int,
-        newText: String?,
-        newCaption: String?
-    ) {
-        val messageOpt = messageRepository.findByUserIdAndMessageId(chatId, messageId)
-        messageOpt?.let { message ->
-            val fileList = listOf(
+    @Transactional
+    fun editMessage(chatId: Long, messageId: Int, newText: String?, newCaption: String?) {
+
+        val message = messageRepository.findByUserIdAndMessageId(chatId,messageId)
+            ?: throw IllegalArgumentException("Message with ID $messageId not found")
+
+        if (!newText.isNullOrBlank() && message.messageType == MessageType.TEXT) {
+            message.text = newText
+            if (message.messageBotId != null) {
+                if (message.session.user.id == chatId) {
+                    val editMessage = EditMessageText(message.session.operator?.id, message.messageBotId!!, newText)
+                    bot().execute(editMessage)
+                } else {
+                    val editMessage = EditMessageText(message.session.user.id, message.messageBotId!!, newText)
+                    bot().execute(editMessage)
+                }
+            }
+        }
+
+        if (!newCaption.isNullOrBlank() && message.messageType in listOf(
                 MessageType.PHOTO,
                 MessageType.VIDEO,
                 MessageType.DOCUMENT,
                 MessageType.ANIMATION
             )
-
+        ) {
+            message.caption = newCaption
             if (message.messageBotId != null) {
-                newText?.let { text ->
-                    if (message.messageType == MessageType.TEXT) {
-                        message.text = newText
-
-                        val editMessage = if (message.session.user.id == chatId)
-                            EditMessageText(message.session.operator!!.id, message.messageBotId!!, text)
-                        else EditMessageText(message.session.user.id, message.messageBotId!!, text)
-                        bot().execute(editMessage)
-                    }
-                }
-
-                newCaption?.let { caption ->
-                    if (message.messageType in fileList) {
-                        message.caption = caption
-                        val editMessage = if (message.session.user.id == chatId)
-                            EditMessageCaption(message.session.operator?.id, message.messageBotId!!).caption(caption)
-                        else EditMessageCaption(message.session.user.id, message.messageBotId!!).caption(caption)
-                        bot().execute(editMessage)
-                    }
-                }
-            } else {
-                newText?.let { text ->
-                    if (message.messageType == MessageType.TEXT)
-                        message.text = text
-                }
-                newCaption?.let { caption ->
-                    if (message.messageType in fileList)
-                        message.caption = caption
+                if (message.session.user.id == chatId) {
+                    val editMessage =
+                        EditMessageCaption(message.session.operator?.id, message.messageBotId!!).caption(newCaption)
+                    bot().execute(editMessage)
+                } else {
+                    val editMessage =
+                        EditMessageCaption(message.session.user.id, message.messageBotId!!).caption(newCaption)
+                    bot().execute(editMessage)
                 }
             }
-            messageRepository.save(message)
         }
+
+        messageRepository.save(message)
     }
 
     @Synchronized

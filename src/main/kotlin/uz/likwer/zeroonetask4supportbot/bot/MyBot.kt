@@ -167,11 +167,10 @@ class MyBot(
                 }
             }
             update.editedMessage()?.run {
-                val editedMessage = update.editedMessage()
-                val chatId = editedMessage.from().id()
-                val messageId = editedMessage.messageId()
-                val newText = editedMessage.text()
-                val newCaption = editedMessage.caption()
+                val chatId = this.from().id()
+                val messageId = this.messageId()
+                val newText = this.text()
+                val newCaption = this.caption()
 
                 botService.editMessage(chatId, messageId, newText, newCaption)
             }
