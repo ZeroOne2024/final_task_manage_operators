@@ -91,6 +91,7 @@ interface MessageRepository : BaseRepository<Messages> {
     fun findBySessionIdAndMessageBotId(sessionId: Long, messageBotId: Int): Messages?
     fun findBySessionIdAndMessageId(sessionId: Long, messageId: Int): Messages?
     fun findByUserIdAndMessageId(userId: Long, messageId: Int): Messages?
+    fun findAllBySessionIdOrderByCreatedDateAsc(sessionId: Long): List<Messages>
 
     @Query("""
         SELECT NEW map(m.session.id as sessionId, m as message)

@@ -6,8 +6,10 @@ import com.pengrad.telegrambot.request.SendMessage
 import jakarta.transaction.Transactional
 import org.springframework.context.MessageSource
 import org.springframework.stereotype.Service
+import uz.likwer.zeroonetask4supportbot.bot.BotService
 import uz.likwer.zeroonetask4supportbot.bot.Utils
 import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.htmlBold
+import uz.likwer.zeroonetask4supportbot.component.SpringContext
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -47,6 +49,7 @@ class BotToolsImpl(
     private val sessionRepository: SessionRepository,
     private val messageSource: MessageSource,
     private val doubleOperatorRepository: DoubleOperatorRepository,
+    private val messageRepository: MessageRepository,
 //    private val botService: BotService,
 ) : BotTools {
 
@@ -136,7 +139,7 @@ class BotToolsImpl(
                 smallestQueue = queue
             }
         }
-        
+
         return smallestSession?.takeIf { session ->
             !doubleOperatorRepository.existsByOperatorIdAndSessionId(operator.id, session)
         }?.let { session ->
@@ -219,6 +222,14 @@ class BotToolsImpl(
             if (!doubleOperatorRepository.existsByOperatorIdAndSessionId(operator.id, it.id!!)) {
                 doubleOperatorRepository.save(DoubleOperator(operator, it))
             }
+
+            session.status = SessionStatus.WAITING
+            val botService = SpringContext.getBean(BotService::class.java)
+            val messages = messageRepository.findAllBySessionIdOrderByCreatedDateAsc(session.id!!)
+            for (message in messages) {
+                botService.addMessageToMap(session.id!!,message,session.user.languages[0].toString())
+            }
+
         }
     }
 
@@ -368,23 +379,18 @@ class BotToolsImpl(
         userRepository.save(user)
     }
 
+    @Transactional
     override fun nextUser(operator: User) {
 
-        val session = sessionRepository.findByOperatorIdAndStatus(operator.id, SessionStatus.BUSY)
-        session?.let {
+        stopChat(operator)
 
-            val user = it.user
-            operator.operatorStatus = OperatorStatus.ACTIVE
-            session.status = SessionStatus.CLOSED
-            user.state = UserState.ACTIVE_USER
-            userRepository.save(user)
-            sessionRepository.save(it)
-            userRepository.save(operator)
+        val botService = SpringContext.getBean(BotService::class.java)
 
-            sendSearchingUserMsg(operator)
-//            botService.contactActiveOperator(operator)
+        sendSearchingUserMsg(operator)
+        botService.contactActiveOperator(operator)
 
-        }
 
     }
+
+
 }
