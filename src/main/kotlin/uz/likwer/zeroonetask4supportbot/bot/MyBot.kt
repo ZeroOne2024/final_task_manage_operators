@@ -5,8 +5,10 @@ import com.pengrad.telegrambot.TelegramException
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.model.request.ChatAction
+import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup
 import com.pengrad.telegrambot.request.AnswerCallbackQuery
 import com.pengrad.telegrambot.request.DeleteMessage
+import com.pengrad.telegrambot.request.EditMessageReplyMarkup
 import com.pengrad.telegrambot.request.SendChatAction
 import com.pengrad.telegrambot.request.SendMessage
 import lombok.RequiredArgsConstructor
@@ -184,10 +186,21 @@ class MyBot(
 
                     if (user.state == UserState.CHOOSE_LANG) {
                         if (user.isOperator()) {
-
+                            if (user.languages.contains(lang))
+                                user.languages.remove(lang)
+                            else user.languages.add(lang)
+                            
+                            userRepository.save(user)
+                            user.msgIdChooseLanguage?.let { msgId ->
+                                bot.execute(
+                                    EditMessageReplyMarkup(chatId, msgId)
+                                        .replyMarkup(botTools.getChooseLanguageReplyMarkup(user))
+                                )
+                            }
                         } else {
                             if (!user.languages.contains(lang)) {
                                 user.languages = mutableListOf(lang)
+                                userRepository.save(user)
                                 bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                             }
                         }

@@ -41,6 +41,8 @@ interface BotTools {
     fun sendSearchingUserMsg(operator: User)
     fun sendChooseLangMsg(user: User)
     fun sendSharePhoneMsg(user: User)
+    fun getChooseLanguageReplyMarkup(user: User): InlineKeyboardMarkup
+    fun getStatusEmojiByBoolean(t: Boolean): String
 }
 
 @Service
@@ -104,7 +106,10 @@ class BotToolsImpl(
                 "END_WORK" -> endWork(user)
                 "START_WORK" -> startWork(user)
                 "TO_ANOTHER_OPERATOR" -> toAnotherOperator(user)
-                else -> return false
+                else -> when (text){
+                    "/setlang"->sendChooseLangMsg(user)
+                    else -> return false
+                }
             }
             true
         } ?: false
@@ -352,16 +357,24 @@ class BotToolsImpl(
     }
 
     override fun sendChooseLangMsg(user: User) {
-        bot().execute(
-            SendMessage(user.id, "Choose language")
-                .replyMarkup(
-                    InlineKeyboardMarkup(
-                        InlineKeyboardButton(text = "🇺🇸", callbackData = "setLangEN"),
-                        InlineKeyboardButton(text = "🇷🇺", callbackData = "setLangRU"),
-                        InlineKeyboardButton(text = "🇺🇿", callbackData = "setLangUZ")
+        if(user.isOperator()){
+            bot().execute(
+                SendMessage(user.id, "Choose language")
+                    .replyMarkup(
+                        InlineKeyboardMarkup(
+                            InlineKeyboardButton(text = "🇺🇸", callbackData = "setLangEN"),
+                            InlineKeyboardButton(text = "🇷🇺", callbackData = "setLangRU"),
+                            InlineKeyboardButton(text = "🇺🇿", callbackData = "setLangUZ")
+                        )
                     )
-                )
-        )
+            )
+        }else{
+            val translatedTextChooseLanguage = botTools().getMsg("CHOOSE_LANGUAGE", user)
+            bot().execute(
+                SendMessage(user.id, translatedTextChooseLanguage)
+                    .replyMarkup(botTools().getChooseLanguageReplyMarkup(user))
+            )
+        }
         user.state = UserState.CHOOSE_LANG
         userRepository.save(user)
     }
@@ -379,6 +392,18 @@ class BotToolsImpl(
         userRepository.save(user)
     }
 
+    override fun getChooseLanguageReplyMarkup(user: User): InlineKeyboardMarkup {
+        return InlineKeyboardMarkup(
+            InlineKeyboardButton(text = "🇺🇸 ${getStatusEmojiByBoolean(user.languages.contains(Language.EN))}", callbackData = "setLangEN"),
+            InlineKeyboardButton(text = "🇷🇺 ${getStatusEmojiByBoolean(user.languages.contains(Language.RU))}", callbackData = "setLangRU"),
+            InlineKeyboardButton(text = "🇺🇿 ${getStatusEmojiByBoolean(user.languages.contains(Language.UZ))}", callbackData = "setLangUZ")
+        )
+    }
+
+    override fun getStatusEmojiByBoolean(t: Boolean): String {
+        return if (t) "✅" else "❌"
+    }
+
     @Transactional
     override fun nextUser(operator: User) {
 
@@ -389,8 +414,6 @@ class BotToolsImpl(
         sendSearchingUserMsg(operator)
         botService.contactActiveOperator(operator)
 
-
     }
-
 
 }

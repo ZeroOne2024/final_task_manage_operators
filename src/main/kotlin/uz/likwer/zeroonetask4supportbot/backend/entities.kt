@@ -28,7 +28,7 @@ class BaseUserEntity(
 @Entity(name = "users")
 class User(
     @Id @Column(nullable = false) var id: Long,
-    @Column( nullable = false, length = 64) val username: String,
+    @Column(nullable = false, length = 64) val username: String,
     @Column(nullable = false, length = 124) var fullName: String,
     @Column(nullable = false, length = 13) var phoneNumber: String,
     @ElementCollection(targetClass = Language::class, fetch = FetchType.EAGER)
@@ -38,7 +38,9 @@ class User(
     @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole? = UserRole.USER,
-    var msgIdSearchingUser:Int?=null,
+
+    var msgIdSearchingUser: Int? = null,
+    var msgIdChooseLanguage: Int? = null,
 ) : BaseUserEntity() {
     fun isOperator(): Boolean {
         return role == UserRole.OPERATOR
