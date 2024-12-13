@@ -98,16 +98,23 @@ class BotToolsImpl(
     @Transactional
     override fun processCommand(text: String?, user: User): Boolean {
         return text?.let {
-            when (getMsgKeyByValue(text, user)) {
-                "STOP_CHAT" -> stopChat(user)
-                "NEXT_USER" -> nextUser(user)
-                "SHORT_BREAK" -> breakOperator(user)
-                "CONTINUE_WORK" -> continueWork(user)
-                "END_WORK" -> endWork(user)
-                "START_WORK" -> startWork(user)
-                "TO_ANOTHER_OPERATOR" -> toAnotherOperator(user)
-                else -> when (text){
-                    "/setlang"->sendChooseLangMsg(user)
+            if(user.isOperator()) {
+                when (getMsgKeyByValue(text, user)) {
+                    "STOP_CHAT" -> stopChat(user)
+                    "NEXT_USER" -> nextUser(user)
+                    "SHORT_BREAK" -> breakOperator(user)
+                    "CONTINUE_WORK" -> continueWork(user)
+                    "END_WORK" -> endWork(user)
+                    "START_WORK" -> startWork(user)
+                    "TO_ANOTHER_OPERATOR" -> toAnotherOperator(user)
+                    else -> when (text) {
+                        "/setlang" -> sendChooseLangMsg(user)
+                        else -> return false
+                    }
+                }
+            } else {
+                when (text) {
+                    "/setlang" -> sendChooseLangMsg(user)
                     else -> return false
                 }
             }
@@ -236,6 +243,19 @@ class BotToolsImpl(
             val botService = SpringContext.getBean(BotService::class.java)
             val messages = messageRepository.findAllBySessionIdOrderByCreatedDateAsc(session.id!!)
             for (message in messages) {
+                    val translatedTextOperator = getMsg("OPERATOR", session.user)
+                    val translatedTextUser = getMsg("USER", session.user)
+                   val text = if (message.user.isOperator()) "$translatedTextOperator:\n"
+                    else "$translatedTextUser:\n"
+
+                message.text?.let { t ->
+                    message.text = text+t
+                }
+
+                message.caption?.let { c ->
+                    message.caption = text+c
+                }
+
                 botService.addMessageToMap(session.id!!,message,session.user.languages[0].toString())
             }
 
