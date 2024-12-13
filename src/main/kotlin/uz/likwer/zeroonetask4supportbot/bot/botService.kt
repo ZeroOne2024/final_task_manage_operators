@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.Scheduled
 
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.backend.*
+import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.clearPhone
+import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.prettyPhoneNumber
 import java.util.concurrent.CopyOnWriteArrayList
 
 
@@ -42,34 +44,6 @@ class BotService(
 
     fun bot(): TelegramBot {
         return Utils.telegramBot()
-    }
-
-    fun sendChooseLangMsg(user: User) {
-        bot().execute(
-            SendMessage(user.id, "Choose language")
-                .replyMarkup(
-                    InlineKeyboardMarkup(
-                        InlineKeyboardButton(text = "🇺🇸", callbackData = "setLangEN"),
-                        InlineKeyboardButton(text = "🇷🇺", callbackData = "setLangRU"),
-                        InlineKeyboardButton(text = "🇺🇿", callbackData = "setLangUZ")
-                    )
-                )
-        )
-        user.state = UserState.CHOOSE_LANG
-        userRepository.save(user)
-    }
-
-    fun askPhone(user: User) {
-        bot().execute(
-            SendMessage(user.id, botTools.getMsg("CLICK_TO_SEND_YOUR_PHONE", user))
-                .replyMarkup(
-                    ReplyKeyboardMarkup(
-                        KeyboardButton(botTools.getMsg("SHARE_PHONE_NUMBER", user)).requestContact(true)
-                    ).resizeKeyboard(true)
-                )
-        )
-        user.state = UserState.SEND_PHONE_NUMBER
-        userRepository.save(user)
     }
 
     fun sendMessageToUser(user: User, message: Messages, session: Session) {
@@ -247,11 +221,10 @@ class BotService(
     }
 
     fun getOperatorSession(operatorId: Long): Session? {
-        return sessionRepository.findLastSessionByOperatorId(operatorId)?.let {
-            if (it.status == SessionStatus.CLOSED) null
-            it
-        }
+        return sessionRepository.findLastSessionByOperatorId(operatorId)
+            ?.takeIf { it.status != SessionStatus.CLOSED }
     }
+
 
     @Transactional
     fun setRate(sessionId: Long, rate: Short): Session? {
@@ -273,21 +246,29 @@ class BotService(
             KeyboardButton(botTools.getMsg("TO_ANOTHER_OPERATOR", operator))
         ).addRow(KeyboardButton(botTools.getMsg("SHORT_BREAK", operator)))
             .resizeKeyboard(true)
-        val messageEntity = if (user.username.isEmpty())
-            MessageEntity(
-                MessageEntity.Type.text_mention,
-                (botTools.getMsg("USER", operator) + ": ").length,
-                user.fullName.length
-            ).user(com.pengrad.telegrambot.model.User(user.id))
-        else
-            MessageEntity(
-                MessageEntity.Type.text_link,
-                (botTools.getMsg("USER", operator) + ": ").length,
-                user.fullName.length
-            ).url("t.me/" + user.username)
+
+        val userPhone = "+" + user.phoneNumber.clearPhone()
+        val userText = botTools.getMsg("USER", operator)
+        val userName = user.fullName
+        val t = "$userText: $userName"
+        val text =
+            "╟─ $t\n" +
+                    "╚═ $userPhone"
+
+        val userNameMsgEnt =
+            if (user.username.isEmpty())
+                MessageEntity(MessageEntity.Type.text_mention, userText.length + 5, userName.length)
+                    .user(com.pengrad.telegrambot.model.User(user.id))
+            else
+                MessageEntity(MessageEntity.Type.text_link, userText.length + 5, userName.length)
+                    .url("t.me/" + user.username)
+
+        val userPhoneMsgEnt =
+            MessageEntity(MessageEntity.Type.phone_number, text.lines()[0].length + 3, userPhone.length)
+
         bot().execute(
-            SendMessage(operator.id, botTools.getMsg("USER", operator) + ": " + user.fullName)
-                .entities(messageEntity)
+            SendMessage(operator.id, text)
+                .entities(userNameMsgEnt, userPhoneMsgEnt)
                 .linkPreviewOptions(LinkPreviewOptions().isDisabled(true))
                 .replyMarkup(replyKeyboardMarkup)
 
@@ -299,7 +280,7 @@ class BotService(
         val activeOperators = userRepository.findFirstActiveOperator(UserRole.OPERATOR, OperatorStatus.ACTIVE)
 
         for (activeOperator in activeOperators) {
-           contactActiveOperator(activeOperator)
+            contactActiveOperator(activeOperator)
         }
     }
 
@@ -309,6 +290,7 @@ class BotService(
         if (queuedSession != null) {
             var session = sessionRepository.findByIdAndDeletedFalse(queuedSession.sessionId)
             if (session != null) {
+
 
                 session.operator = operator
                 session.status = SessionStatus.BUSY

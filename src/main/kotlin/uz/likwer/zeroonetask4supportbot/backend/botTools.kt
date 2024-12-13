@@ -6,7 +6,6 @@ import com.pengrad.telegrambot.request.SendMessage
 import jakarta.transaction.Transactional
 import org.springframework.context.MessageSource
 import org.springframework.stereotype.Service
-import uz.likwer.zeroonetask4supportbot.bot.BotService
 import uz.likwer.zeroonetask4supportbot.bot.Utils
 import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.htmlBold
 import java.util.*
@@ -101,6 +100,7 @@ class BotToolsImpl(
                 "CONTINUE_WORK" -> continueWork(user)
                 "END_WORK" -> endWork(user)
                 "START_WORK" -> startWork(user)
+                "TO_ANOTHER_OPERATOR" -> toAnotherOperator(user)
                 else -> return false
             }
             true
@@ -136,15 +136,12 @@ class BotToolsImpl(
                 smallestQueue = queue
             }
         }
-
-        return smallestSession?.let { session ->
-            smallestQueue?.let { queue ->
-                val messages = queue.remove(session)
-                if (messages != null) {
-                    QueueResponse(session, messages)
-                } else {
-                    throw NoSessionInQueue()
-                }
+        
+        return smallestSession?.takeIf { session ->
+            doubleOperatorRepository.existsByOperatorIdAndSessionId(operator.id, session)
+        }?.let { session ->
+            smallestQueue?.remove(session)?.let { messages ->
+                QueueResponse(session, messages)
             }
         }
     }
@@ -193,6 +190,7 @@ class BotToolsImpl(
             userRepository.save(operator)
 
             sendWorkContinuedMsg(operator)
+            sendSearchingUserMsg(operator)
         }
     }
 
@@ -201,8 +199,8 @@ class BotToolsImpl(
             operator.operatorStatus = OperatorStatus.ACTIVE
             userRepository.save(operator)
 
-            sendSearchingUserMsg(operator)
             sendWorkStartedMsg(operator)
+            sendSearchingUserMsg(operator)
         }
     }
 
@@ -243,13 +241,33 @@ class BotToolsImpl(
                 botTools().getMsg("OPERATOR_STOPPED_CHAT", operator) + "\n" +
                         botTools().getMsg("PLEASE_RATE_OPERATOR_WORK", operator)
             ).replyMarkup(
-                InlineKeyboardMarkup(
-                    InlineKeyboardButton("1").callbackData("rateS1" + session.id),
-                    InlineKeyboardButton("2").callbackData("rateS2" + session.id),
-                    InlineKeyboardButton("3").callbackData("rateS3" + session.id),
-                    InlineKeyboardButton("4").callbackData("rateS4" + session.id),
-                    InlineKeyboardButton("5").callbackData("rateS5" + session.id)
-                )
+                InlineKeyboardMarkup()
+                    .addRow(
+                        InlineKeyboardButton(
+                            botTools().getMsg(
+                                "VERY_BAD",
+                                user
+                            )
+                        ).callbackData("rateS1" + session.id)
+                    )
+                    .addRow(InlineKeyboardButton(botTools().getMsg("BAD", user)).callbackData("rateS2" + session.id))
+                    .addRow(
+                        InlineKeyboardButton(
+                            botTools().getMsg(
+                                "SATISFACTORY",
+                                user
+                            )
+                        ).callbackData("rateS3" + session.id)
+                    )
+                    .addRow(InlineKeyboardButton(botTools().getMsg("GOOD", user)).callbackData("rateS4" + session.id))
+                    .addRow(
+                        InlineKeyboardButton(
+                            botTools().getMsg(
+                                "EXCELLENT",
+                                user
+                            )
+                        ).callbackData("rateS5" + session.id)
+                    )
             )
         )
     }
@@ -303,6 +321,7 @@ class BotToolsImpl(
         bot().execute(
             SendMessage(operator.id, botTools().getMsg("SEARCHING_USER", operator).htmlBold())
                 .parseMode(ParseMode.HTML)
+                .replyMarkup(ReplyKeyboardRemove())
         )
     }
 
