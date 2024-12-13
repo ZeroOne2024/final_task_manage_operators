@@ -111,8 +111,7 @@ class MyBot(
                     }
 
 
-                    if (user.operatorStatus != null) {
-
+                    if (user.isOperator()) {
                         val isCommand = botTools.processCommand(text, user)
 
                         if (!isCommand) {

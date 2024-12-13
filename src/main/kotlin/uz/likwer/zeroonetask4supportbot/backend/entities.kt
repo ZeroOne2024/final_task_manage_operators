@@ -43,6 +43,8 @@ class User(
     fun isOperator(): Boolean {
         return role == UserRole.OPERATOR
     }
+
+
 }
 
 

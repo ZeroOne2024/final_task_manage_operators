@@ -138,7 +138,7 @@ class BotToolsImpl(
         }
         
         return smallestSession?.takeIf { session ->
-            doubleOperatorRepository.existsByOperatorIdAndSessionId(operator.id, session)
+            !doubleOperatorRepository.existsByOperatorIdAndSessionId(operator.id, session)
         }?.let { session ->
             smallestQueue?.remove(session)?.let { messages ->
                 QueueResponse(session, messages)

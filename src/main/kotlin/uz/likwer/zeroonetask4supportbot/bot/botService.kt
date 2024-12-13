@@ -11,7 +11,6 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import uz.likwer.zeroonetask4supportbot.backend.*
 import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.clearPhone
-import uz.likwer.zeroonetask4supportbot.bot.Utils.Companion.prettyPhoneNumber
 import java.util.concurrent.CopyOnWriteArrayList
 
 
@@ -55,7 +54,12 @@ class BotService(
         val chatId = user.id.toString()
         val response: com.pengrad.telegrambot.model.Message? = when (message.messageType) {
             MessageType.TEXT -> {
-                val sendMessage = SendMessage(chatId, message.text ?: "")
+                val translatedTextOperator = botTools.getMsg("OPERATOR", user)
+                val translatedTextUser = botTools.getMsg("USER", user)
+                val text =
+                    if (message.user.isOperator()) translatedTextOperator + ":\n" + message.text
+                    else translatedTextUser + ":\n" + message.text
+                val sendMessage = SendMessage(chatId, text)
                 replyMessageId?.let { sendMessage.replyToMessageId(it) }
                 bot().execute(sendMessage).message()
             }
@@ -290,19 +294,19 @@ class BotService(
         if (queuedSession != null) {
             var session = sessionRepository.findByIdAndDeletedFalse(queuedSession.sessionId)
             if (session != null) {
+                if (operator.id != session.user.id) {
+                    session.operator = operator
+                    session.status = SessionStatus.BUSY
+                    session = sessionRepository.save(session)
 
+                    operator.operatorStatus = OperatorStatus.BUSY
+                    val saved = userRepository.save(operator)
 
-                session.operator = operator
-                session.status = SessionStatus.BUSY
-                session = sessionRepository.save(session)
+                    sendUserInfoForOperator(operator, session.user)
 
-                operator.operatorStatus = OperatorStatus.BUSY
-                val saved = userRepository.save(operator)
-
-                sendUserInfoForOperator(operator, session.user)
-
-                for (message in queuedSession.messages) {
-                    sendMessageToUser(saved, message, session)
+                    for (message in queuedSession.messages) {
+                        sendMessageToUser(saved, message, session)
+                    }
                 }
             }
         }
