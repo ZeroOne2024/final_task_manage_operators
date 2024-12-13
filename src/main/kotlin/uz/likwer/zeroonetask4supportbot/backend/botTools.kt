@@ -357,8 +357,8 @@ class BotToolsImpl(
     }
 
     override fun sendChooseLangMsg(user: User) {
-        if(user.isOperator()){
-            bot().execute(
+        if(!user.isOperator()){
+            val msgId = bot().execute(
                 SendMessage(user.id, "Choose language")
                     .replyMarkup(
                         InlineKeyboardMarkup(
@@ -367,7 +367,9 @@ class BotToolsImpl(
                             InlineKeyboardButton(text = "🇺🇿", callbackData = "setLangUZ")
                         )
                     )
-            )
+            ).message().messageId()
+            user.msgIdChooseLanguage = msgId
+            userRepository.save(user)
         }else{
             val translatedTextChooseLanguage = botTools().getMsg("CHOOSE_LANGUAGE", user)
             bot().execute(

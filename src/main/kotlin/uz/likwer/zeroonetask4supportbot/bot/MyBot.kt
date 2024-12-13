@@ -113,10 +113,10 @@ class MyBot(
                     }
 
 
-                    if (user.isOperator()) {
-                        val isCommand = botTools.processCommand(text, user)
+                    val isCommand = botTools.processCommand(text, user)
 
-                        if (!isCommand) {
+                    if (!isCommand) {
+                        if (user.isOperator()) {
                             val session = botService.getOperatorSession(chatId)
                             session?.let {
                                 val newMessage = Messages(
@@ -135,33 +135,33 @@ class MyBot(
                                 val savedMessage = messageRepository.save(newMessage)
                                 botService.sendMessageToUser(session.user, savedMessage, session)
                             }
-                        }
-                    } else {
-                        val sessionOpt = botService.getSession(user)
-                        sessionOpt.let { session ->
-                            val newMessage = Messages(
-                                user = session.user,
-                                session = session,
-                                messageId = messageId,
-                                replyMessageId = messageReplyId,
-                                messageType = typeAndFileId.first,
-                                text = text,
-                                caption = caption,
-                                fileId = typeAndFileId.second,
-                                location = location,
-                                contact = contact,
-                                dice = dice,
-                            )
-                            val savedMessage = messageRepository.save(newMessage)
-
-                            if (session.operator != null) {
-                                botService.sendMessageToUser(session.operator!!, savedMessage, session)
-                            } else {
-                                botService.addMessageToMap(
-                                    session.id!!,
-                                    savedMessage,
-                                    session.user.languages[0].toString()
+                        } else {
+                            val sessionOpt = botService.getSession(user)
+                            sessionOpt.let { session ->
+                                val newMessage = Messages(
+                                    user = session.user,
+                                    session = session,
+                                    messageId = messageId,
+                                    replyMessageId = messageReplyId,
+                                    messageType = typeAndFileId.first,
+                                    text = text,
+                                    caption = caption,
+                                    fileId = typeAndFileId.second,
+                                    location = location,
+                                    contact = contact,
+                                    dice = dice,
                                 )
+                                val savedMessage = messageRepository.save(newMessage)
+
+                                if (session.operator != null) {
+                                    botService.sendMessageToUser(session.operator!!, savedMessage, session)
+                                } else {
+                                    botService.addMessageToMap(
+                                        session.id!!,
+                                        savedMessage,
+                                        session.user.languages[0].toString()
+                                    )
+                                }
                             }
                         }
                     }
@@ -189,7 +189,8 @@ class MyBot(
                             if (user.languages.contains(lang))
                                 user.languages.remove(lang)
                             else user.languages.add(lang)
-                            
+
+                            user.state = UserState.ACTIVE_USER
                             userRepository.save(user)
                             user.msgIdChooseLanguage?.let { msgId ->
                                 bot.execute(
@@ -200,6 +201,7 @@ class MyBot(
                         } else {
                             if (!user.languages.contains(lang)) {
                                 user.languages = mutableListOf(lang)
+                                user.state = UserState.ACTIVE_USER
                                 userRepository.save(user)
                                 bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                             }
