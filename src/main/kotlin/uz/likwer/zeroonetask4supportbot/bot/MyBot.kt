@@ -184,27 +184,25 @@ class MyBot(
                 if (data.startsWith("setLang")) {
                     val lang = Language.valueOf(data.substring("setLang".length).uppercase())
 
-                    if (user.state == UserState.CHOOSE_LANG) {
-                        if (user.isOperator()) {
-                            if (user.languages.contains(lang))
-                                user.languages.remove(lang)
-                            else user.languages.add(lang)
+                    if (user.isOperator()) {
+                        if (user.languages.contains(lang))
+                            user.languages.remove(lang)
+                        else user.languages.add(lang)
 
+                        user.state = UserState.ACTIVE_USER
+                        userRepository.save(user)
+                        user.msgIdChooseLanguage?.let { msgId ->
+                            bot.execute(
+                                EditMessageReplyMarkup(chatId, msgId)
+                                    .replyMarkup(botTools.getChooseLanguageReplyMarkup(user))
+                            )
+                        }
+                    } else if (user.state == UserState.CHOOSE_LANG) {
+                        if (!user.languages.contains(lang)) {
+                            user.languages = mutableListOf(lang)
                             user.state = UserState.ACTIVE_USER
                             userRepository.save(user)
-                            user.msgIdChooseLanguage?.let { msgId ->
-                                bot.execute(
-                                    EditMessageReplyMarkup(chatId, msgId)
-                                        .replyMarkup(botTools.getChooseLanguageReplyMarkup(user))
-                                )
-                            }
-                        } else {
-                            if (!user.languages.contains(lang)) {
-                                user.languages = mutableListOf(lang)
-                                user.state = UserState.ACTIVE_USER
-                                userRepository.save(user)
-                                bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
-                            }
+                            bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                         }
                     }
 
