@@ -42,4 +42,6 @@ class PrivateUserController(
 
     @GetMapping("get-sessions-of-operator/{operatorId}")
     fun getAllSessionOperator(@PathVariable operatorId: Long, pageable: Pageable ) = sessionService.getAllSessionUser(operatorId,pageable)
+
+
 }

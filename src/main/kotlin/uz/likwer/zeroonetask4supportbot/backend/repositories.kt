@@ -226,4 +226,5 @@ interface LocationRepository : BaseRepository<Location>
 interface ContactRepository : BaseRepository<Contact>
 interface DoubleOperatorRepository : BaseRepository<DoubleOperator> {
     fun existsByOperatorIdAndSessionId(operatorId: Long, sessionId: Long): Boolean
+    fun findFirstBySessionIdOrderByCreatedDateDesc(sessionId: Long): DoubleOperator?
 }

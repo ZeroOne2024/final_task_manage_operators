@@ -228,7 +228,11 @@ class BotToolsImpl(
                 doubleOperatorRepository.save(DoubleOperator(operator, it))
             }
 
+            operator.operatorStatus = OperatorStatus.ACTIVE
+            userRepository.save(operator)
             session.status = SessionStatus.WAITING
+            session.operator = null
+            sessionRepository.save(session)
             val botService = SpringContext.getBean(BotService::class.java)
             val messages = messageRepository.findAllBySessionIdOrderByCreatedDateAsc(session.id!!)
             for (message in messages) {
@@ -343,8 +347,13 @@ class BotToolsImpl(
 
     //translate functions
     override fun getMsg(key: String, user: User): String {
-        val locale = Locale.forLanguageTag(user.languages[0].name.lowercase())
-        return messageSource.getMessage(key, null, locale)
+        try{
+            val locale = Locale.forLanguageTag(user.languages[0].name.lowercase())
+            return messageSource.getMessage(key, null, locale)
+        }catch ( e: Exception){
+            return "Error"
+        }
+
     }
 
     override fun getMsgKeyByValue(value: String, user: User): String {

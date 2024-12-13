@@ -20,6 +20,7 @@ class BotService(
     private val messageRepository: MessageRepository,
     private val sessionRepository: SessionRepository,
     private val botTools: BotTools,
+    private val doubleOperatorRepository: DoubleOperatorRepository,
 ) {
 
     @Synchronized
@@ -54,11 +55,14 @@ class BotService(
         val chatId = user.id.toString()
         val response: com.pengrad.telegrambot.model.Message? = when (message.messageType) {
             MessageType.TEXT -> {
+                val lastOperator = doubleOperatorRepository.findFirstBySessionIdOrderByCreatedDateDesc(session.id!!)
+                val text = if (lastOperator != null && lastOperator.operator != user){
                 val translatedTextOperator = botTools.getMsg("OPERATOR", user)
                 val translatedTextUser = botTools.getMsg("USER", user)
-                val text =
                     if (message.user.isOperator()) translatedTextOperator + ":\n" + message.text
                     else translatedTextUser + ":\n" + message.text
+            }else
+                message.text
                 val sendMessage = SendMessage(chatId, text)
                 replyMessageId?.let { sendMessage.replyToMessageId(it) }
                 bot().execute(sendMessage).message()
