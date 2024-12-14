@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import org.springframework.data.repository.NoRepositoryBean
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.data.repository.query.Param
+import java.time.LocalDateTime
 import java.util.*
 
 @NoRepositoryBean
@@ -116,8 +117,8 @@ interface SessionRepository : BaseRepository<Session> {
     """
     )
     fun findHighestRatedOperatorsByDateRange(
-        @Param("fromDate") fromDate: Date,
-        @Param("toDate") toDate: Date,
+        @Param("fromDate") fromDate: LocalDateTime,
+        @Param("toDate") toDate: LocalDateTime,
         pageable: Pageable
     ): Page<Array<Any>>
 
@@ -132,8 +133,8 @@ interface SessionRepository : BaseRepository<Session> {
     """
     )
     fun findLowestRatedOperatorsByDateRange(
-        @Param("fromDate") fromDate: Date,
-        @Param("toDate") toDate: Date,
+        @Param("fromDate") fromDate: LocalDateTime,
+        @Param("toDate") toDate: LocalDateTime,
         pageable: Pageable
     ): Page<Array<Any>>
 
@@ -160,8 +161,8 @@ interface SessionRepository : BaseRepository<Session> {
     )
     fun findAllSessionsByOperatorAndDateRange(
         @Param("operatorId") operatorId: Long,
-        @Param("fromDate") fromDate: Date,
-        @Param("toDate") toDate: Date,
+        @Param("fromDate") fromDate: LocalDateTime,
+        @Param("toDate") toDate: LocalDateTime,
         pageable: Pageable
     ): Page<Session>
 
@@ -175,8 +176,8 @@ interface SessionRepository : BaseRepository<Session> {
     )
     fun findAllSessionsByUserAndDateRange(
         @Param("userId") userId: Long,
-        @Param("fromDate") fromDate: Date,
-        @Param("toDate") toDate: Date,
+        @Param("fromDate") fromDate: LocalDateTime,
+        @Param("toDate") toDate: LocalDateTime,
         pageable: Pageable
     ): Page<Session>
 

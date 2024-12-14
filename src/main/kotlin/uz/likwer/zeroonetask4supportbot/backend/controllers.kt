@@ -18,7 +18,7 @@ class ExceptionHandler(private val errorMessageSource: ResourceBundleMessageSour
 
 
 @RestController
-@RequestMapping("/sessions")
+@RequestMapping("/api/sessions")
 class SessionController(private val sessionService: SessionService) {
 
     @GetMapping
