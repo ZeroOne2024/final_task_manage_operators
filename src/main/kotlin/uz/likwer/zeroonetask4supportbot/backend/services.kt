@@ -11,6 +11,8 @@ interface UserService {
     fun getAllUsers(): List<UserResponse>
     fun deleteOperator(operatorId: Long): UserResponse
     fun deleteUser(userId: Long)
+    fun getUserById(id: Long): UserResponse
+    fun getOperatorById(id: Long): UserResponse
 }
 
 interface SessionService {
@@ -75,6 +77,18 @@ class UserServiceImpl(
         val user = optional.get()
         user.deleted = true
         userRepository.save(user)
+    }
+
+    override fun getUserById(id: Long): UserResponse {
+        userRepository.findByIdAndDeletedFalse(id)?.let {
+            return UserResponse.toResponse(it)
+        }?: throw UserNotFoundException()
+    }
+
+    override fun getOperatorById(id: Long): UserResponse {
+        userRepository.findByIdAndRoleAndDeletedFalse(id,UserRole.OPERATOR)?.let {
+            return UserResponse.toResponse(it)
+        }?: throw UserNotFoundException()
     }
 }
 
