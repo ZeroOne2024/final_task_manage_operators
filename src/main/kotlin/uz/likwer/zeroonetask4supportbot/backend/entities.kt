@@ -1,6 +1,5 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
-
 import jakarta.persistence.*
 import org.hibernate.annotations.ColumnDefault
 import org.springframework.data.annotation.CreatedDate
@@ -39,14 +38,11 @@ class User(
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole? = UserRole.USER,
 
-    var msgIdSearchingUser: Int? = null,
     var msgIdChooseLanguage: Int? = null,
 ) : BaseUserEntity() {
     fun isOperator(): Boolean {
         return role == UserRole.OPERATOR
     }
-
-
 }
 
 

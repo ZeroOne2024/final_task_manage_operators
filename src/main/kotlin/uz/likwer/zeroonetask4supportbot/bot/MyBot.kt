@@ -3,12 +3,14 @@ package uz.likwer.zeroonetask4supportbot.bot
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.TelegramException
 import com.pengrad.telegrambot.UpdatesListener
+import com.pengrad.telegrambot.model.ChatMember
 import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.model.request.ChatAction
-import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup
 import com.pengrad.telegrambot.request.AnswerCallbackQuery
 import com.pengrad.telegrambot.request.DeleteMessage
 import com.pengrad.telegrambot.request.EditMessageReplyMarkup
+import com.pengrad.telegrambot.request.GetChatMember
+import com.pengrad.telegrambot.request.GetMe
 import com.pengrad.telegrambot.request.SendChatAction
 import com.pengrad.telegrambot.request.SendMessage
 import lombok.RequiredArgsConstructor
@@ -185,9 +187,10 @@ class MyBot(
                     val lang = Language.valueOf(data.substring("setLang".length).uppercase())
 
                     if (user.isOperator()) {
-                        if (user.languages.contains(lang))
-                            user.languages.remove(lang)
-                        else user.languages.add(lang)
+                        if (user.languages.contains(lang)) {
+                            if (user.languages.size != 1)
+                                user.languages.remove(lang)
+                        } else user.languages.add(lang)
 
                         user.state = UserState.ACTIVE_USER
                         userRepository.save(user)

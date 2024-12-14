@@ -98,7 +98,7 @@ class BotToolsImpl(
     @Transactional
     override fun processCommand(text: String?, user: User): Boolean {
         return text?.let {
-            if(user.isOperator()) {
+            if (user.isOperator()) {
                 when (getMsgKeyByValue(text, user)) {
                     "STOP_CHAT" -> stopChat(user)
                     "NEXT_USER" -> nextUser(user)
@@ -243,22 +243,22 @@ class BotToolsImpl(
             val botService = SpringContext.getBean(BotService::class.java)
             val messages = messageRepository.findAllBySessionIdOrderByCreatedDateAsc(session.id!!)
             for (message in messages) {
-                    val translatedTextOperator = getMsg("OPERATOR", session.user)
-                    val translatedTextUser = getMsg("USER", session.user)
-                   val text = if (message.user.isOperator()) "$translatedTextOperator:\n"
-                    else "$translatedTextUser:\n"
+                val translatedTextOperator = getMsg("OPERATOR", session.user)
+                val translatedTextUser = getMsg("USER", session.user)
+                val text = if (message.user.isOperator()) "$translatedTextOperator:\n"
+                else "$translatedTextUser:\n"
 
                 message.text?.let { t ->
-                    message.text = text+t
+                    message.text = text + t
                 }
 
                 message.caption?.let { c ->
-                    message.caption = text+c
+                    message.caption = text + c
                 }
 
-                botService.addMessageToMap(session.id!!,message,session.user.languages[0].toString())
+                botService.addMessageToMap(session.id!!, message, session.user.languages[0].toString())
+                sendSearchingUserMsg(operator)
             }
-
         }
     }
 
@@ -283,30 +283,24 @@ class BotToolsImpl(
             ).replyMarkup(
                 InlineKeyboardMarkup()
                     .addRow(
-                        InlineKeyboardButton(
-                            botTools().getMsg(
-                                "VERY_BAD",
-                                user
-                            )
-                        ).callbackData("rateS1" + session.id)
+                        InlineKeyboardButton(botTools().getMsg("VERY_BAD", user))
+                            .callbackData("rateS1" + session.id)
                     )
-                    .addRow(InlineKeyboardButton(botTools().getMsg("BAD", user)).callbackData("rateS2" + session.id))
                     .addRow(
-                        InlineKeyboardButton(
-                            botTools().getMsg(
-                                "SATISFACTORY",
-                                user
-                            )
-                        ).callbackData("rateS3" + session.id)
+                        InlineKeyboardButton(botTools().getMsg("BAD", user))
+                            .callbackData("rateS2" + session.id)
                     )
-                    .addRow(InlineKeyboardButton(botTools().getMsg("GOOD", user)).callbackData("rateS4" + session.id))
                     .addRow(
-                        InlineKeyboardButton(
-                            botTools().getMsg(
-                                "EXCELLENT",
-                                user
-                            )
-                        ).callbackData("rateS5" + session.id)
+                        InlineKeyboardButton(botTools().getMsg("SATISFACTORY", user))
+                            .callbackData("rateS3" + session.id)
+                    )
+                    .addRow(
+                        InlineKeyboardButton(botTools().getMsg("GOOD", user))
+                            .callbackData("rateS4" + session.id)
+                    )
+                    .addRow(
+                        InlineKeyboardButton(botTools().getMsg("EXCELLENT", user))
+                            .callbackData("rateS5" + session.id)
                     )
             )
         )
@@ -367,10 +361,10 @@ class BotToolsImpl(
 
     //translate functions
     override fun getMsg(key: String, user: User): String {
-        try{
+        try {
             val locale = Locale.forLanguageTag(user.languages[0].name.lowercase())
             return messageSource.getMessage(key, null, locale)
-        }catch ( e: Exception){
+        } catch (e: Exception) {
             return "Error"
         }
 
@@ -386,7 +380,15 @@ class BotToolsImpl(
     }
 
     override fun sendChooseLangMsg(user: User) {
-        if(!user.isOperator()){
+        if (user.isOperator()) {
+            val translatedTextChooseLanguage = botTools().getMsg("CHOOSE_LANGUAGE", user)
+            val msgId = bot().execute(
+                SendMessage(user.id, translatedTextChooseLanguage)
+                    .replyMarkup(botTools().getChooseLanguageReplyMarkup(user))
+            ).message().messageId()
+            user.msgIdChooseLanguage = msgId
+        } else {
+            // isUser
             val msgId = bot().execute(
                 SendMessage(user.id, "Choose language")
                     .replyMarkup(
@@ -398,15 +400,8 @@ class BotToolsImpl(
                     )
             ).message().messageId()
             user.msgIdChooseLanguage = msgId
-            userRepository.save(user)
-        }else{
-            val translatedTextChooseLanguage = botTools().getMsg("CHOOSE_LANGUAGE", user)
-            bot().execute(
-                SendMessage(user.id, translatedTextChooseLanguage)
-                    .replyMarkup(botTools().getChooseLanguageReplyMarkup(user))
-            )
+            user.state = UserState.CHOOSE_LANG
         }
-        user.state = UserState.CHOOSE_LANG
         userRepository.save(user)
     }
 
@@ -425,9 +420,18 @@ class BotToolsImpl(
 
     override fun getChooseLanguageReplyMarkup(user: User): InlineKeyboardMarkup {
         return InlineKeyboardMarkup(
-            InlineKeyboardButton(text = "🇺🇸 ${getStatusEmojiByBoolean(user.languages.contains(Language.EN))}", callbackData = "setLangEN"),
-            InlineKeyboardButton(text = "🇷🇺 ${getStatusEmojiByBoolean(user.languages.contains(Language.RU))}", callbackData = "setLangRU"),
-            InlineKeyboardButton(text = "🇺🇿 ${getStatusEmojiByBoolean(user.languages.contains(Language.UZ))}", callbackData = "setLangUZ")
+            InlineKeyboardButton(
+                text = "🇺🇸 ${getStatusEmojiByBoolean(user.languages.contains(Language.EN))}",
+                callbackData = "setLangEN"
+            ),
+            InlineKeyboardButton(
+                text = "🇷🇺 ${getStatusEmojiByBoolean(user.languages.contains(Language.RU))}",
+                callbackData = "setLangRU"
+            ),
+            InlineKeyboardButton(
+                text = "🇺🇿 ${getStatusEmojiByBoolean(user.languages.contains(Language.UZ))}",
+                callbackData = "setLangUZ"
+            )
         )
     }
 

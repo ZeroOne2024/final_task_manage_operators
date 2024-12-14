@@ -252,19 +252,18 @@ class BotService(
         val userName = user.fullName
         val t = "$userText: $userName"
         val text =
-            "╟─ $t\n" +
-                    "╚═ $userPhone"
+            "$t\n" + userPhone
 
         val userNameMsgEnt =
             if (user.username.isEmpty())
-                MessageEntity(MessageEntity.Type.text_mention, userText.length + 5, userName.length)
+                MessageEntity(MessageEntity.Type.text_mention, userText.length + 2, userName.length)
                     .user(com.pengrad.telegrambot.model.User(user.id))
             else
-                MessageEntity(MessageEntity.Type.text_link, userText.length + 5, userName.length)
+                MessageEntity(MessageEntity.Type.text_link, userText.length + 2, userName.length)
                     .url("t.me/" + user.username)
 
         val userPhoneMsgEnt =
-            MessageEntity(MessageEntity.Type.phone_number, text.lines()[0].length + 3, userPhone.length)
+            MessageEntity(MessageEntity.Type.phone_number, text.lines()[0].length, userPhone.length)
 
         bot().execute(
             SendMessage(operator.id, text)
