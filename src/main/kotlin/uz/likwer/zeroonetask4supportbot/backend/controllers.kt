@@ -122,8 +122,14 @@ class PrivateUserController(
     @GetMapping("get-sessions-of-user/{userId}")
     fun getAllSessionUser(@PathVariable userId: Long, pageable: Pageable ) = sessionService.getAllSessionUser(userId,pageable)
 
-    @GetMapping("get-sessions-of-operator/{operatorId}")
-    fun getAllSessionOperator(@PathVariable operatorId: Long, pageable: Pageable ) = sessionService.getAllSessionUser(operatorId,pageable)
+    @GetMapping("get-operator/{id}")
+    fun getOperatorById(@PathVariable id: Long) = userService.getOperatorById(id)
+
+    @GetMapping("get-user/{id}")
+    fun getUserById(@PathVariable id: Long) = userService.getUserById(id)
+
+//    @GetMapping("get-sessions-of-operator/{operatorId}")
+//    fun getAllSessionOperator(@PathVariable operatorId: Long, pageable: Pageable ) = sessionService.getAllSessionUser(operatorId,pageable)
 
 
 }

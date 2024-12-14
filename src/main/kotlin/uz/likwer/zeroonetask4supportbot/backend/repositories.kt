@@ -18,7 +18,7 @@ import java.util.*
 
 @NoRepositoryBean
 interface BaseRepository<T : BaseEntity> : JpaRepository<T, Long>, JpaSpecificationExecutor<T> {
-    fun findByIdAndDeletedFalse(id: Long): T?
+//    fun findByIdAndDeletedFalse(id: Long): T?
     fun trash(id: Long): T?
     fun trashList(ids: List<Long>): List<T?>
     fun findAllNotDeleted(): List<T>
@@ -35,7 +35,7 @@ class BaseRepositoryImpl<T : BaseEntity>(
 
     val isNotDeletedSpecification = Specification<T> { root, _, cb -> cb.equal(root.get<Boolean>("deleted"), false) }
 
-    override fun findByIdAndDeletedFalse(id: Long) = findByIdOrNull(id)?.run { if (deleted) null else this }
+//    override fun findByIdAndDeletedFalse(id: Long) = findByIdOrNull(id)?.run { if (deleted) null else this }
 
     @Transactional
     override fun trash(id: Long): T? = findByIdOrNull(id)?.run {
@@ -59,6 +59,7 @@ class BaseRepositoryImpl<T : BaseEntity>(
 interface DiceRepository : BaseRepository<Dice> {}
 
 interface UserRepository : JpaRepository<User, Long> {
+
     fun existsByRole(role: UserRole): Boolean
     fun findAllByRoleAndDeletedFalse(userRole: UserRole): List<User>
     fun findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(
@@ -81,7 +82,8 @@ interface UserRepository : JpaRepository<User, Long> {
     ): List<User>
 
     fun findAllByDeletedFalse(): List<User>
-
+    fun findByIdAndDeletedFalse(id: Long): User?
+    fun findByIdAndRoleAndDeletedFalse(id: Long,role: UserRole): User?
 
 }
 
@@ -105,6 +107,9 @@ interface MessageRepository : BaseRepository<Messages> {
 }
 
 interface SessionRepository : BaseRepository<Session> {
+
+    fun findByIdAndDeletedFalse(sessionId: Long): Session?
+
     @Query(
         """
     SELECT s.operator, SUM(s.rate)
