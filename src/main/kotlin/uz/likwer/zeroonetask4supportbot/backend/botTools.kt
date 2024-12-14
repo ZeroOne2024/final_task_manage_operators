@@ -41,6 +41,7 @@ interface BotTools {
     fun sendSearchingUserMsg(operator: User)
     fun sendChooseLangMsg(user: User)
     fun sendSharePhoneMsg(user: User)
+    fun sendEnterYourFullName(user: User)
     fun getChooseLanguageReplyMarkup(user: User): InlineKeyboardMarkup
     fun getStatusEmojiByBoolean(t: Boolean): String
 }
@@ -108,12 +109,14 @@ class BotToolsImpl(
                     "TO_ANOTHER_OPERATOR" -> toAnotherOperator(user)
                     else -> when (text) {
                         "/setlang" -> sendChooseLangMsg(user)
+                        "/setname" -> sendEnterYourFullName(user)
                         else -> return false
                     }
                 }
             } else {
                 when (text) {
                     "/setlang" -> sendChooseLangMsg(user)
+                    "/setname" -> sendEnterYourFullName(user)
                     else -> return false
                 }
             }
@@ -257,8 +260,8 @@ class BotToolsImpl(
                 }
 
                 botService.addMessageToMap(session.id!!, message, session.user.languages[0].toString())
-                sendSearchingUserMsg(operator)
             }
+            sendSearchingUserMsg(operator)
         }
     }
 
@@ -310,6 +313,7 @@ class BotToolsImpl(
         bot().execute(
             SendMessage(operator.id, botTools().getMsg("CHAT_STOPPED", operator).htmlBold())
                 .parseMode(ParseMode.HTML)
+                .replyMarkup(ReplyKeyboardRemove())
         )
     }
 
@@ -415,6 +419,12 @@ class BotToolsImpl(
                 )
         )
         user.state = UserState.SEND_PHONE_NUMBER
+        userRepository.save(user)
+    }
+
+    override fun sendEnterYourFullName(user: User) {
+        bot().execute(SendMessage(user.id, botTools().getMsg("SEND_YOUR_FULL_NAME", user)))
+        user.state = UserState.SEND_FULL_NAME
         userRepository.save(user)
     }
 
