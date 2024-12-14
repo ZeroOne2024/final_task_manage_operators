@@ -52,7 +52,6 @@ class BotToolsImpl(
     private val messageSource: MessageSource,
     private val doubleOperatorRepository: DoubleOperatorRepository,
     private val messageRepository: MessageRepository,
-//    private val botService: BotService,
 ) : BotTools {
 
     fun bot(): TelegramBot {
@@ -228,6 +227,7 @@ class BotToolsImpl(
         }
     }
 
+    @Synchronized
     override fun toAnotherOperator(operator: User) {
         val session = sessionRepository.findLastSessionByOperatorId(operator.id)
         session?.let {
