@@ -110,139 +110,143 @@ class MyBot(
                                         }
                                     }
                                 }
-                            } else {
-                                val messageId = message.messageId()
-                                val messageReplyId = message.replyToMessage()?.messageId()
-                                val typeAndFileId = botTools.determineMessageType(update.message())
-                                val caption = message.caption()
-                                val text = message.text()
-                                val location = message.location()?.let {
-                                    locationRepository.save(Location(it.latitude(), it.longitude()))
-                                }
-                                val contact = message.contact()?.let {
-                                    contactRepository.save(Contact(it.firstName(), it.phoneNumber()))
-                                }
-                                val dice = message.dice()?.let {
-                                    diceRepository.save(Dice(it.value(), it.emoji()))
-                                }
-
-
-                                val isCommand = botTools.processCommand(text, user)
-
-                                if (!isCommand) {
-                                    if (user.isOperator()) {
-                                        val session = botService.getOperatorSession(chatId)
-                                        session?.let {
-                                            val newMessage = Messages(
-                                                user = session.operator!!,
-                                                session = session,
-                                                messageId = messageId,
-                                                replyMessageId = messageReplyId,
-                                                messageType = typeAndFileId.first,
-                                                text = text,
-                                                caption = caption,
-                                                fileId = typeAndFileId.second,
-                                                location = location,
-                                                contact = contact,
-                                                dice = dice,
-                                            )
-                                            val savedMessage = messageRepository.save(newMessage)
-                                            botService.sendMessageToUser(session.user, savedMessage, session)
-                                        }
-                                    } else {
-                                        val sessionOpt = botService.getSession(user)
-                                        sessionOpt.let { session ->
-                                            val newMessage = Messages(
-                                                user = session.user,
-                                                session = session,
-                                                messageId = messageId,
-                                                replyMessageId = messageReplyId,
-                                                messageType = typeAndFileId.first,
-                                                text = text,
-                                                caption = caption,
-                                                fileId = typeAndFileId.second,
-                                                location = location,
-                                                contact = contact,
-                                                dice = dice,
-                                            )
-                                            val savedMessage = messageRepository.save(newMessage)
-
-                                            if (session.operator != null) {
-                                                botService.sendMessageToUser(session.operator!!, savedMessage, session)
-                                            } else {
-                                                botService.addMessageToMap(
-                                                    session.id!!,
-                                                    savedMessage,
-                                                    session.user.languages[0].toString()
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
                             }
                         }
-                    }
-                    update.editedMessage()?.run {
-                        val chatId = this.from().id()
-                        val messageId = this.messageId()
-                        val newText = this.text()
-                        val newCaption = this.caption()
+                    } else {
+                        val messageId = message.messageId()
+                        val messageReplyId = message.replyToMessage()?.messageId()
+                        val typeAndFileId = botTools.determineMessageType(update.message())
+                        val caption = message.caption()
+                        val text = message.text()
+                        val location = message.location()?.let {
+                            locationRepository.save(Location(it.latitude(), it.longitude()))
+                        }
+                        val contact = message.contact()?.let {
+                            contactRepository.save(Contact(it.firstName(), it.phoneNumber()))
+                        }
+                        val dice = message.dice()?.let {
+                            diceRepository.save(Dice(it.value(), it.emoji()))
+                        }
 
-                        botService.editMessage(chatId, messageId, newText, newCaption)
-                    }
 
-                    update.callbackQuery()?.let { callbackQuery ->
-                        val userOpt = botService.getUser(callbackQuery.from())
-                        userOpt?.let { user ->
-                            val chatId = user.id
-                            var data = callbackQuery.data()
+                        val isCommand = botTools.processCommand(text, user)
 
-                            if (data.startsWith("setLang")) {
-                                val lang = Language.valueOf(data.substring("setLang".length).uppercase())
+                        if (!isCommand) {
+                            if (user.isOperator()) {
+                                val session = botService.getOperatorSession(chatId)
+                                session?.let {
+                                    val newMessage = Messages(
+                                        user = session.operator!!,
+                                        session = session,
+                                        messageId = messageId,
+                                        replyMessageId = messageReplyId,
+                                        messageType = typeAndFileId.first,
+                                        text = text,
+                                        caption = caption,
+                                        fileId = typeAndFileId.second,
+                                        location = location,
+                                        contact = contact,
+                                        dice = dice,
+                                    )
+                                    val savedMessage = messageRepository.save(newMessage)
+                                    botService.sendMessageToUser(session.user, savedMessage, session)
+                                }
+                            } else {
+                                val sessionOpt = botService.getSession(user)
+                                sessionOpt.let { session ->
+                                    val newMessage = Messages(
+                                        user = session.user,
+                                        session = session,
+                                        messageId = messageId,
+                                        replyMessageId = messageReplyId,
+                                        messageType = typeAndFileId.first,
+                                        text = text,
+                                        caption = caption,
+                                        fileId = typeAndFileId.second,
+                                        location = location,
+                                        contact = contact,
+                                        dice = dice,
+                                    )
+                                    val savedMessage = messageRepository.save(newMessage)
 
-                                if (user.isOperator()) {
-                                    if (user.languages.contains(lang)) {
-                                        if (user.languages.size != 1)
-                                            user.languages.remove(lang)
-                                    } else user.languages.add(lang)
-
-                                    user.state = UserState.ACTIVE_USER
-                                    userRepository.save(user)
-                                    user.msgIdChooseLanguage?.let { msgId ->
-                                        bot.execute(
-                                            EditMessageReplyMarkup(chatId, msgId)
-                                                .replyMarkup(botTools.getChooseLanguageReplyMarkup(user))
+                                    if (session.operator != null) {
+                                        botService.sendMessageToUser(session.operator!!, savedMessage, session)
+                                    } else {
+                                        botService.addMessageToMap(
+                                            session.id!!,
+                                            savedMessage,
+                                            session.user.languages[0].toString()
                                         )
                                     }
-                                } else if (user.state == UserState.CHOOSE_LANG) {
-                                    if (!user.languages.contains(lang)) {
-                                        user.languages = mutableListOf(lang)
-                                        user.state = UserState.ACTIVE_USER
-                                        userRepository.save(user)
-                                        bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
-                                    }
                                 }
-
-                                if (user.phoneNumber.isEmpty()) {
-                                    botTools.sendSharePhoneMsg(user)
-                                }
-                            } else if (data.startsWith("rateS")) {
-                                data = data.substring("rateS".length)
-                                val rate = data.substring(0, 1).toShort()
-                                val sessionId = data.substring(1).toLong()
-
-                                botService.setRate(sessionId, rate)
-                                bot.execute(
-                                    AnswerCallbackQuery(callbackQuery.id())
-                                        .text(botTools.getMsg("THANK_YOU", user))
-                                        .showAlert(true)
-                                )
-                                bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
                             }
                         }
                     }
                 }
             }
+
+
+            update.editedMessage()?.run {
+                val chatId = this.from().id()
+                val messageId = this.messageId()
+                val newText = this.text()
+                val newCaption = this.caption()
+
+                botService.editMessage(chatId, messageId, newText, newCaption)
+            }
+
+            update.callbackQuery()?.let { callbackQuery ->
+                val userOpt = botService.getUser(callbackQuery.from())
+                userOpt?.let { user ->
+                    val chatId = user.id
+                    var data = callbackQuery.data()
+
+                    if (data.startsWith("setLang")) {
+                        val lang = Language.valueOf(data.substring("setLang".length).uppercase())
+
+                        if (user.isOperator()) {
+                            if (user.languages.contains(lang)) {
+                                if (user.languages.size != 1)
+                                    user.languages.remove(lang)
+                            } else user.languages.add(lang)
+
+                            user.state = UserState.ACTIVE_USER
+                            userRepository.save(user)
+                            user.msgIdChooseLanguage?.let { msgId ->
+                                bot.execute(
+                                    EditMessageReplyMarkup(chatId, msgId)
+                                        .replyMarkup(botTools.getChooseLanguageReplyMarkup(user))
+                                )
+                            }
+                        } else if (user.state == UserState.CHOOSE_LANG) {
+                            if (!user.languages.contains(lang)) {
+                                user.languages = mutableListOf(lang)
+                                user.state = UserState.ACTIVE_USER
+                                userRepository.save(user)
+                                bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
+                            }
+                        }
+
+                        if (user.phoneNumber.isEmpty()) {
+                            botTools.sendSharePhoneMsg(user)
+                        }
+                    } else if (data.startsWith("rateS")) {
+                        data = data.substring("rateS".length)
+                        val rate = data.substring(0, 1).toShort()
+                        val sessionId = data.substring(1).toLong()
+
+                        botService.setRate(sessionId, rate)
+                        bot.execute(
+                            AnswerCallbackQuery(callbackQuery.id())
+                                .text(botTools.getMsg("THANK_YOU", user))
+                                .showAlert(true)
+                        )
+                        bot.execute(DeleteMessage(chatId, callbackQuery.message().messageId()))
+                    }
+                }
+            }
+
+
         } catch (e: Exception) {
             e.printStackTrace()
         }

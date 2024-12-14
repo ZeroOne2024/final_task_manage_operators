@@ -423,7 +423,7 @@ class BotToolsImpl(
     }
 
     override fun sendEnterYourFullName(user: User) {
-        bot().execute(SendMessage(user.id, botTools().getMsg("SEND_YOUR_FULL_NAME", user)))
+        bot().execute(SendMessage(user.id, botTools().getMsg("SEND_YOUR_FULL_NAME", user)).replyMarkup(ReplyKeyboardRemove()))
         user.state = UserState.SEND_FULL_NAME
         userRepository.save(user)
     }
