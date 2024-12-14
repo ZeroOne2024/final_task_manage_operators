@@ -24,10 +24,12 @@ class BotService(
 ) {
 
     @Synchronized
-    fun getUser(tgUser: com.pengrad.telegrambot.model.User): User {
+    fun getUser(tgUser: com.pengrad.telegrambot.model.User): User? {
         val userOpt = userRepository.findById(tgUser.id())
-        if (userOpt.isPresent)
-            return userOpt.get()
+        if (userOpt.isPresent){
+            if(userOpt.get().deleted)
+                return null
+            return userOpt.get()}
         var username = tgUser.username()
         if (username == null) username = ""
         var lastName = tgUser.lastName()

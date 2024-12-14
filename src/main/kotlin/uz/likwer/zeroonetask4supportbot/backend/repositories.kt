@@ -1,7 +1,6 @@
 package uz.likwer.zeroonetask4supportbot.backend
 
 import jakarta.persistence.EntityManager
-import jakarta.persistence.Tuple
 import jakarta.transaction.Transactional
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -80,6 +79,8 @@ interface UserRepository : JpaRepository<User, Long> {
         @Param("role") role: UserRole,
         @Param("status") status: OperatorStatus
     ): List<User>
+
+    fun findAllByDeletedFalse(): List<User>
 
 
 }

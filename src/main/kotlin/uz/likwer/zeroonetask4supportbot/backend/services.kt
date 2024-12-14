@@ -54,7 +54,7 @@ class UserServiceImpl(
     }
 
     override fun getAllUsers(): List<UserResponse> {
-        return userRepository.findAll().map {
+        return userRepository.findAllByDeletedFalse().map {
             UserResponse.toResponse(it)
         }
     }
@@ -65,6 +65,7 @@ class UserServiceImpl(
         if (optional.isEmpty) throw UserNotFoundException()
         val user = optional.get()
         user.role = UserRole.USER
+        user.operatorStatus = null
         return UserResponse.toResponse(userRepository.save(user))
     }
 
@@ -80,7 +81,6 @@ class UserServiceImpl(
 @Service
 class SessionServiceImpl(
     private val sessionRepository: SessionRepository,
-    private val userRepository: UserRepository
 ) : SessionService {
 
     override fun getAllSession(pageable: Pageable): Page<SessionInfo> {

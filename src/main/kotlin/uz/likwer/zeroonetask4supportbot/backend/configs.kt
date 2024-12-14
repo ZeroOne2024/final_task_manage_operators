@@ -18,10 +18,4 @@ class WebMvcConfig : WebMvcConfigurer {
         setBasename("errors")
     }
 
-
-//    @Bean
-//    fun messageSource() = ResourceBundleMessageSource().apply {
-//        setDefaultEncoding(Charsets.UTF_8.name())
-//        setBasename("messages")
-//    }
 }
