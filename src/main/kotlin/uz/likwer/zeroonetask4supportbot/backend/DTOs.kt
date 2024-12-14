@@ -38,8 +38,13 @@ data class SessionInfo(
     val rate: Short?
 )
 
+data class MessageInfo(
+    val sendingMessageAmount: Long,
+    val user: UserResponse,
+)
+
 data class RateInfo(
-    val rate: Short,
+    val rate: Double,
     val operator: UserResponse,
 )
 

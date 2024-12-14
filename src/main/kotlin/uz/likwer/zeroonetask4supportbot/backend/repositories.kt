@@ -97,6 +97,29 @@ interface MessageRepository : BaseRepository<Messages> {
     fun findByUserIdAndMessageId(userId: Long, messageId: Int): Messages?
     fun findAllBySessionIdOrderByCreatedDateAsc(sessionId: Long): List<Messages>
 
+    @Query(
+        """
+    SELECT m.user, COUNT(m.id) as messageCount
+    FROM messages m
+    WHERE m.user.operatorStatus IS NULL and m.deleted = true
+    GROUP BY m.user
+    ORDER BY messageCount DESC
+    """
+    )
+    fun findMostActiveUsers(pageable: Pageable): Page<Array<Any>>
+
+    @Query(
+        """
+    SELECT m.user, COUNT(m.id) as messageCount
+    FROM messages m
+    WHERE m.user.operatorStatus IS NOT NULL and m.deleted = true
+    GROUP BY m.user
+    ORDER BY messageCount DESC
+    """
+    )
+    fun findMostActiveOperators(pageable: Pageable): Page<Array<Any>>
+
+
     @Query("""
         SELECT NEW map(m.session.id as sessionId, m as message)
         FROM messages m
@@ -142,6 +165,19 @@ interface SessionRepository : BaseRepository<Session> {
         @Param("toDate") toDate: LocalDateTime,
         pageable: Pageable
     ): Page<Array<Any>>
+
+    @Query(
+        """
+    SELECT s.operator, AVG(COALESCE(s.rate, 0)) AS avgRate
+    FROM sessions s
+    GROUP BY s.operator
+    ORDER BY avgRate DESC
+    """
+    )
+    fun findOperatorsWithAverageRate(
+        pageable: Pageable
+    ): Page<Array<Any>>
+
 
     @Query(
         """
