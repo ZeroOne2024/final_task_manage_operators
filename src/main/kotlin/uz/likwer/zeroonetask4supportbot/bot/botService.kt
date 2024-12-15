@@ -76,6 +76,12 @@ class BotService(
                 bot().execute(sendVideo).message()
             }
 
+            MessageType.VIDEO_NOTE -> {
+                val sendVideoNote = SendVideoNote(chatId, message.fileId ?: "")
+                replyMessageId?.let { sendVideoNote.replyToMessageId(it) }
+                bot().execute(sendVideoNote).message()
+            }
+
             MessageType.VOICE -> {
                 val sendVoice = SendVoice(chatId, message.fileId ?: "")
                 replyMessageId?.let { sendVoice.replyToMessageId(it) }
@@ -187,6 +193,7 @@ class BotService(
 
         messageRepository.save(message)
     }
+
 
     @Synchronized
     fun addMessageToMap(id: Long, message: Messages, language: String) {

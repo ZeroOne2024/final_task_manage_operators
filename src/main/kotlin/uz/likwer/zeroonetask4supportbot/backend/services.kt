@@ -3,6 +3,7 @@ package uz.likwer.zeroonetask4supportbot.backend
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import kotlin.math.round
 
 interface UserService {
 
@@ -28,6 +29,31 @@ interface SessionService {
     fun getHighRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo>
     fun getLowRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo>
     fun getOperatorRate(operatorId: Long, pageable: Pageable): Page<RateInfo>
+    fun getOperatorsAverageRates(pageable: Pageable): Page<RateInfo>
+}
+
+interface MessageService {
+    fun getMostSendMessageUsers(pageable: Pageable): Page<MessageInfo>
+    fun getMostSendMessageOperators(pageable: Pageable): Page<MessageInfo>
+}
+
+@Service
+class MessageServiceImpl(private val messageRepository: MessageRepository) : MessageService {
+    override fun getMostSendMessageUsers(pageable: Pageable): Page<MessageInfo> {
+        return toMessageInfo(messageRepository.findMostActiveUsers(pageable))
+    }
+
+    override fun getMostSendMessageOperators(pageable: Pageable): Page<MessageInfo> {
+        return toMessageInfo(messageRepository.findMostActiveOperators(pageable))
+    }
+
+    private fun toMessageInfo(results: Page<Array<Any>>): Page<MessageInfo> {
+        return results.map { result ->
+            val operator = result[0] as User
+            val count = result[1] as Number
+            MessageInfo(sendingMessageAmount = count.toLong(),user=UserResponse.toResponse(operator))
+        }
+    }
 }
 
 @Service
@@ -90,6 +116,7 @@ class UserServiceImpl(
             return UserResponse.toResponse(it)
         }?: throw UserNotFoundException()
     }
+
 }
 
 @Service
@@ -172,6 +199,10 @@ class SessionServiceImpl(
         return toRateInfo(sessionRepository.findOperatorRates(operatorId, pageable))
     }
 
+    override fun getOperatorsAverageRates(pageable: Pageable): Page<RateInfo> {
+        return toRateInfo(sessionRepository.findOperatorsWithAverageRate(pageable))
+    }
+
     private fun toSessionInfo(sessions: Page<Session>): Page<SessionInfo> {
         return sessions.map { session ->
             SessionInfo(
@@ -196,7 +227,8 @@ class SessionServiceImpl(
         return results.map { result ->
             val operator = result[0] as User
             val totalRate = result[1] as Number
-            RateInfo(rate = totalRate.toShort(), operator = UserResponse.toResponse(operator))
+            val roundedRate = round(totalRate.toDouble() * 100) / 100
+            RateInfo(rate = roundedRate, operator = UserResponse.toResponse(operator))
         }
     }
 
