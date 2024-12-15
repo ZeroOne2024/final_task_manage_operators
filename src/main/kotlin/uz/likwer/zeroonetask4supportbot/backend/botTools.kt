@@ -172,7 +172,7 @@ class BotToolsImpl(
 
             it.status = SessionStatus.CLOSED
             operator.operatorStatus = OperatorStatus.ACTIVE
-            it.operator = null
+//            it.operator = null
             userRepository.save(operator)
             user.state = UserState.ACTIVE_USER
             sessionRepository.save(it)
