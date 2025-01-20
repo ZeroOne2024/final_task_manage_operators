@@ -6,14 +6,16 @@ import org.springframework.web.bind.annotation.*
 import uz.likwer.zeroonetask4supportbot.bot.bot.BotService
 
 @RestController
-@RequestMapping("/bot")
+@RequestMapping("bot")
 class BotController(private val botService: BotService) {
     @PostMapping
     fun create(@RequestBody req: TokenRequest) = botService.createBot(req)
+
+//    @Mapping()
 }
 
 @RestController
-@RequestMapping("/api/sessions")
+@RequestMapping("sessions")
 class SessionController(private val sessionService: SessionService) {
 
     @GetMapping
@@ -21,17 +23,17 @@ class SessionController(private val sessionService: SessionService) {
         return sessionService.getAllSession(pageable)
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("{id}")
     fun getOne(@PathVariable id: Long): SessionInfo {
         return sessionService.getOne(id)
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("user/{userId}")
     fun getAllSessionUser(@PathVariable userId: Long, pageable: Pageable): Page<SessionInfo> {
         return sessionService.getAllSessionUser(userId, pageable)
     }
 
-    @GetMapping("/operator/{operatorId}")
+    @GetMapping("operator/{operatorId}")
     fun getAllSessionOperator(@PathVariable operatorId: Long, pageable: Pageable): Page<SessionInfo> {
         return sessionService.getAllSessionOperator(operatorId, pageable)
     }
@@ -41,7 +43,7 @@ class SessionController(private val sessionService: SessionService) {
 //        return sessionService.getOperatorsAverageRates(pageable)
 //    }
 
-    @PostMapping("/user/{userId}")
+    @PostMapping("user/{userId}")
     fun getAllSessionUserDateRange(
         @PathVariable userId: Long,
         @RequestBody dto: DateRangeDTO,
@@ -50,7 +52,7 @@ class SessionController(private val sessionService: SessionService) {
         return sessionService.getAllSessionUserDateRange(userId, dto, pageable)
     }
 
-    @PostMapping("/operator/{operatorId}")
+    @PostMapping("operator/{operatorId}")
     fun getAllSessionOperatorDateRange(
         @PathVariable operatorId: Long,
         @RequestBody dto: DateRangeDTO,
@@ -59,22 +61,22 @@ class SessionController(private val sessionService: SessionService) {
         return sessionService.getAllSessionOperatorDateRange(operatorId, dto, pageable)
     }
 
-    @GetMapping("/status")
+    @GetMapping("status")
     fun getSessionsByStatus(@RequestParam status: SessionStatusEnum, pageable: Pageable): Page<SessionInfo> {
         return sessionService.getSessionsByStatus(status, pageable)
     }
 
-    @GetMapping("/operators/high-rate")
+    @GetMapping("operators/high-rate")
     fun getHighRateOperator(pageable: Pageable): Page<RateInfo> {
         return sessionService.getHighRateOperator(pageable)
     }
 
-    @GetMapping("/operators/low-rate")
+    @GetMapping("operators/low-rate")
     fun getLowRateOperator(pageable: Pageable): Page<RateInfo> {
         return sessionService.getLowRateOperator(pageable)
     }
 
-    @PostMapping("/operators/high-rate")
+    @PostMapping("operators/high-rate")
     fun getHighRateOperatorDateRange(
         @RequestBody dto: DateRangeDTO,
         pageable: Pageable
@@ -82,7 +84,7 @@ class SessionController(private val sessionService: SessionService) {
         return sessionService.getHighRateOperatorDateRange(dto, pageable)
     }
 
-    @PostMapping("/operators/low-rate")
+    @PostMapping("operators/low-rate")
     fun getLowRateOperatorDateRange(
         @RequestBody dto: DateRangeDTO,
         pageable: Pageable
@@ -90,21 +92,21 @@ class SessionController(private val sessionService: SessionService) {
         return sessionService.getLowRateOperatorDateRange(dto, pageable)
     }
 
-    @GetMapping("/operators/rate/{operatorId}")
+    @GetMapping("operators/rate/{operatorId}")
     fun getOperatorRate(@PathVariable operatorId: Long, pageable: Pageable): Page<RateInfo> {
         return sessionService.getOperatorRate(operatorId, pageable)
     }
 }
 
 @RestController
-@RequestMapping("/api/messages")
+@RequestMapping("messages")
 class MessageController(private val messageService: MessageService) {
 
-//    @GetMapping("/most-send-operators")
+//    @GetMapping("most-send-operators")
 //    fun getMostSendMessageOperators(pageable: Pageable): Page<MessageInfo> {
 //        return messageService.getMostSendMessageOperators(pageable)
 //    }
-//    @GetMapping("/most-send-users")
+//    @GetMapping("most-send-users")
 //    fun getMostSendMessageUsers(pageable: Pageable): Page<MessageInfo> {
 //        return messageService.getMostSendMessageUsers(pageable)
 //    }
@@ -112,7 +114,7 @@ class MessageController(private val messageService: MessageService) {
 
 
 @RestController
-@RequestMapping("api/v1/private/manage-users")
+@RequestMapping("private/manage-users")
 class PrivateUserController(
     private val userService: UserService,
     private val sessionService: SessionService

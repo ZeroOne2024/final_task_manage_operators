@@ -30,8 +30,6 @@ class BotService(
         for (activeOperator in activeOperators) {
             var isConnected = false
             for (bot in activeBots) {
-//                if (activeOperator.botId == bot.value.botId)
-
                 if (!isConnected) {
                     isConnected = bot.value.contactActiveOperator(activeOperator)
                 }

@@ -52,6 +52,7 @@ class User(
     fun isTalking(): Boolean {
         return state == UserStateEnum.TALKING || operatorStatus == OperatorStatus.BUSY
     }
+
     fun isActiveOperator(): Boolean {
         return operatorStatus == OperatorStatus.ACTIVE
     }
@@ -68,8 +69,13 @@ class Session(
     fun hasOperator(): Boolean {
         return operator != null
     }
-    fun isClosed():Boolean{
+
+    fun isClosed(): Boolean {
         return status == SessionStatusEnum.CLOSED
+    }
+
+    fun isBusy(): Boolean {
+        return status == SessionStatusEnum.BUSY
     }
 }
 
@@ -105,7 +111,7 @@ class BotMessage(
     @ManyToOne val user: User,
     @ManyToOne val session: Session,
     @Column(nullable = false) val messageId: Int,
-    @Column(nullable = true) var botMessageId: Int?=null,
+    @Column(nullable = true) var botMessageId: Int? = null,
     @Column(nullable = true) val replyMessageId: Int? = null,
     @Column(nullable = true) var text: String? = null,
     @Column(nullable = true) var caption: String? = null,

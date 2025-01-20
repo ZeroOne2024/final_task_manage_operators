@@ -43,7 +43,8 @@ enum class BotMessageType {
     AUDIO,
     ANIMATION,
     DOCUMENT,
-    VOICE
+    VOICE,
+    POLL
 }
 
 enum class UserStateEnum {

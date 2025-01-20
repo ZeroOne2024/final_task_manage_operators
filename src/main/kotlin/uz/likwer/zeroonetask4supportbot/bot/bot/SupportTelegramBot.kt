@@ -59,17 +59,60 @@ open class SupportTelegramBot(
     override fun onUpdateReceived(update: Update) {
         executorService.execute {
             try {
-                if (update.hasMessage())
-                    handleMessage(update)
-                if (update.hasEditedMessage())
-                    handleEditedMessage(update)
-                if (update.hasCallbackQuery())
-                    handleCallbackQuery(update)
-//                update.chatMember.newChatMember.status = kicked
+                if (update.hasMessage()) handleMessage(update)
+                if (update.hasEditedMessage()) handleEditedMessage(update)
+                if (update.hasCallbackQuery()) handleCallbackQuery(update)
+                if (update.hasMyChatMember()) {
+                    handleMyChatMember(update)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
+    }
+
+    @Transactional
+    open fun handleMyChatMember(update: Update) {
+        val chatMember = update.myChatMember
+        val user = getUser(chatMember.from)
+
+        if (user.isUser()) {
+            val newStatus = chatMember.newChatMember.status
+            if (newStatus == "kicked") {
+                user.deleted = true
+                sessionRepository.findLastSessionByUserId(user.id)?.let { session ->
+                    if (session.isBusy()) {
+                        session.operator?.let { operator ->
+                            session.status = SessionStatusEnum.CLOSED
+                            user.state = UserStateEnum.ACTIVE_USER
+                            operator.operatorStatus = OperatorStatus.ACTIVE
+                            sessionRepository.save(session)
+                            userRepository.saveAll(listOf(user, operator))
+                            val bot = findBotById(operator.botId)!!
+                            val sendMessage =
+                                SendMessage(operator.id.toString(), getMsg("CHAT_STOPPED", operator).htmlBold())
+                            sendMessage.parseMode = ParseMode.HTML
+                            sendMessage.replyMarkup = ReplyKeyboardRemove(true)
+                            bot.execute(sendMessage)
+                            val sendMessage1 =
+                                SendMessage(operator.id.toString(), getMsg("SEARCHING_USER", operator).htmlBold())
+                            sendMessage1.parseMode = ParseMode.HTML
+                            sendMessage1.replyMarkup = ReplyKeyboardRemove(true)
+                            bot.execute(sendMessage1)
+
+                        }
+                    }
+                }
+            } else if (newStatus == "member") {
+                user.deleted = false
+            }
+            userRepository.save(user)
+        }
+    }
+
+    fun removeNullKeysFromText(input: String): String {
+        val regex = """\w+=null,?\s*""".toRegex()
+        return input.replace(regex, "").replace(", )", ")").trim()
     }
 
     @Transactional
@@ -96,18 +139,16 @@ open class SupportTelegramBot(
                     findBotById(session.botId)?.let { bot ->
                         this.execute(
                             SendMessage(
-                                operator.id.toString(),
-                                getMsg("YOU_HAVE_ALREADY_OPENED_A_SESSION_IN_ANOTHER_BOT", operator) +
-                                        " @${bot.username}"
+                                operator.id.toString(), getMsg(
+                                    "YOU_HAVE_ALREADY_OPENED_A_SESSION_IN_ANOTHER_BOT", operator
+                                ) + " @${bot.username}"
                             )
                         )
                     }
                 } else {
                     var isCommand = false
-                    if (message.hasText())
-                        isCommand = handleOperatorCommands(message.text, operator)
-                    if (!isCommand)
-                        handleSessionMsgForOperator(update, operator)
+                    if (message.hasText()) isCommand = handleOperatorCommands(message.text, operator)
+                    if (!isCommand) handleSessionMsgForOperator(update, operator)
                 }
                 null
             }
@@ -137,8 +178,7 @@ open class SupportTelegramBot(
     open fun handleOperatorCommandsOrSendMainMenuMsg(message: Message, operator: User) {
         if (message.hasText()) {
             val isCommand = handleOperatorCommands(message.text, operator)
-            if (!isCommand)
-                sendMainMenuMsg(operator)
+            if (!isCommand) sendMainMenuMsg(operator)
         }
     }
 
@@ -216,13 +256,12 @@ open class SupportTelegramBot(
     @Transactional
     open fun checkAndHandleUserSession(user: User, update: Update) {
         sessionRepository.findLastSessionByUserId(user.id)?.let { session ->
-            if (session.botId != botId) {
+            if (session.isBusy() && session.botId != botId) {
                 findBotById(session.botId)?.let { bot ->
                     this.execute(
                         SendMessage(
                             user.id.toString(),
-                            getMsg("YOU_HAVE_ALREADY_OPENED_A_SESSION_IN_ANOTHER_BOT", user) +
-                                    " @${bot.username}"
+                            getMsg("YOU_HAVE_ALREADY_OPENED_A_SESSION_IN_ANOTHER_BOT", user) + " @${bot.username}"
                         )
                     )
                 }
@@ -231,9 +270,7 @@ open class SupportTelegramBot(
     }
 
     private fun findBotById(botId: Long): SupportTelegramBot? {
-        for (bot in activeBots)
-            if (bot.value.botId == botId)
-                return bot.value
+        for (bot in activeBots) if (bot.value.botId == botId) return bot.value
         return null
     }
 
@@ -291,9 +328,7 @@ open class SupportTelegramBot(
                 user.botId = botId
                 userRepository.save(user)
                 addMessageToMap(
-                    session.id!!,
-                    savedMessage,
-                    session.user.languages.elementAt(0).toString()
+                    session.id!!, savedMessage, session.user.languages.elementAt(0).toString()
                 )
             }
         }
@@ -384,7 +419,7 @@ open class SupportTelegramBot(
         val callbackQuery = update.callbackQuery
         var data = callbackQuery.data
 
-        getUser(callbackQuery.from)?.let { user ->
+        getUser(callbackQuery.from).let { user ->
             val chatId = user.id
 
             if (user.isUser()) {
@@ -407,8 +442,7 @@ open class SupportTelegramBot(
 
                             if (user.phoneNumber.isEmpty()) {
                                 sendSharePhoneMsg(user)
-                            } else
-                                sendMainMenuMsg(user)
+                            } else sendMainMenuMsg(user)
                         }
                     }
                 }
@@ -537,10 +571,9 @@ open class SupportTelegramBot(
     }
 
     @Synchronized
-    fun getUser(from: org.telegram.telegrambots.meta.api.objects.User): User? {
+    fun getUser(from: org.telegram.telegrambots.meta.api.objects.User): User {
         val userOpt = userRepository.findById(from.id)
         if (userOpt.isPresent) {
-            if (userOpt.get().deleted) return null
             return userOpt.get()
         }
         var username = from.userName
@@ -549,11 +582,7 @@ open class SupportTelegramBot(
         lastName = if (lastName == null) "" else " $lastName"
         return userRepository.save(
             User(
-                from.id,
-                username,
-                from.firstName + lastName,
-                "",
-                botId
+                from.id, username, from.firstName + lastName, "", botId
             )
         )
     }
@@ -613,8 +642,7 @@ open class SupportTelegramBot(
     }
 
     private fun getOperatorSession(operatorId: Long): Session? {
-        return sessionRepository.findLastSessionByOperatorId(operatorId)
-            ?.takeIf { !it.isClosed() }
+        return sessionRepository.findLastSessionByOperatorId(operatorId)?.takeIf { !it.isClosed() }
     }
 
 
@@ -706,6 +734,7 @@ open class SupportTelegramBot(
             }
 
             message.hasVideoNote() -> Pair(BotMessageType.VIDEO, message.videoNote.fileId)
+            message.hasPoll() -> Pair(BotMessageType.POLL, null)
             message.hasVoice() -> Pair(BotMessageType.VOICE, message.voice.fileId)
             message.hasVideo() -> Pair(BotMessageType.VIDEO_NOTE, message.video.fileId)
             message.hasAudio() -> Pair(BotMessageType.AUDIO, message.audio.fileId)
@@ -755,8 +784,7 @@ open class SupportTelegramBot(
 
     open fun findActiveOperator(language: String): User? {
         return userRepository.findFirstByRoleAndOperatorStatusAndDeletedFalseOrderByModifiedDateAsc(
-            UserRole.OPERATOR,
-            OperatorStatus.ACTIVE
+            UserRole.OPERATOR, OperatorStatus.ACTIVE
         )
     }
 
@@ -764,9 +792,7 @@ open class SupportTelegramBot(
     open fun getQueuedSession(operator: User): QueueResponse? {
         val languages = operator.languages
         val languageToQueueMap = mapOf(
-            LanguageEnum.UZ to queueUz,
-            LanguageEnum.RU to queueRu,
-            LanguageEnum.EN to queueEn
+            LanguageEnum.UZ to queueUz, LanguageEnum.RU to queueRu, LanguageEnum.EN to queueEn
         )
 
         var smallestSession: Long? = null
@@ -875,8 +901,7 @@ open class SupportTelegramBot(
     }
 
     private fun prepareMessageText(message: BotMessage, session: Session, userLang: String): BotMessage {
-        val prefix = if (message.user.isOperator())
-            "${getMsg("OPERATOR", session.user)}:\n"
+        val prefix = if (message.user.isOperator()) "${getMsg("OPERATOR", session.user)}:\n"
         else "${getMsg("USER", session.user)}:\n"
 
         message.text = message.text?.let { prefix + it }
@@ -920,8 +945,7 @@ open class SupportTelegramBot(
     open fun sendRateMsg(user: User, operator: User, session: Session) {
         val sendMessage = SendMessage(
             user.id.toString(),
-            getMsg("OPERATOR_STOPPED_CHAT", operator) + "\n" +
-                    getMsg("PLEASE_RATE_OPERATOR_WORK", operator)
+            getMsg("OPERATOR_STOPPED_CHAT", operator) + "\n" + getMsg("PLEASE_RATE_OPERATOR_WORK", operator)
         )
         val btn1 = InlineKeyboardButton(getMsg("VERY_BAD", user))
         btn1.callbackData = "rateS1" + session.id
@@ -938,8 +962,8 @@ open class SupportTelegramBot(
         this.execute(sendMessage)
     }
 
-    open fun sendChatStoppedMsg(operator: User) {
-        val sendMessage = SendMessage(operator.id.toString(), getMsg("CHAT_STOPPED", operator).htmlBold())
+    open fun sendChatStoppedMsg(user: User) {
+        val sendMessage = SendMessage(user.id.toString(), getMsg("CHAT_STOPPED", user).htmlBold())
         sendMessage.parseMode = ParseMode.HTML
         sendMessage.replyMarkup = ReplyKeyboardRemove(true)
         this.execute(sendMessage)
@@ -1010,9 +1034,7 @@ open class SupportTelegramBot(
         for (language in user.languages) {
             val locale = Locale.forLanguageTag(language.name.lowercase())
             val bundle = ResourceBundle.getBundle("messages", locale)
-            for (key in bundle.keySet())
-                if (bundle.getString(key) == value)
-                    return key
+            for (key in bundle.keySet()) if (bundle.getString(key) == value) return key
         }
         return ""
     }
