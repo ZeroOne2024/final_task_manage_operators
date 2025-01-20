@@ -13,7 +13,7 @@ class BotController(private val botService: BotService) {
 }
 
 @RestController
-@RequestMapping("/sessions")
+@RequestMapping("/api/sessions")
 class SessionController(private val sessionService: SessionService) {
 
     @GetMapping
@@ -34,6 +34,11 @@ class SessionController(private val sessionService: SessionService) {
     @GetMapping("/operator/{operatorId}")
     fun getAllSessionOperator(@PathVariable operatorId: Long, pageable: Pageable): Page<SessionInfo> {
         return sessionService.getAllSessionOperator(operatorId, pageable)
+    }
+
+    @GetMapping("/operator/average")
+    fun getAllSessionOperator(pageable: Pageable): Page<RateInfo> {
+        return sessionService.getOperatorsAverageRates(pageable)
     }
 
     @PostMapping("/user/{userId}")
@@ -88,6 +93,20 @@ class SessionController(private val sessionService: SessionService) {
     @GetMapping("/operators/rate/{operatorId}")
     fun getOperatorRate(@PathVariable operatorId: Long, pageable: Pageable): Page<RateInfo> {
         return sessionService.getOperatorRate(operatorId, pageable)
+    }
+}
+
+@RestController
+@RequestMapping("/api/messages")
+class MessageController(private val messageService: MessageService) {
+
+    @GetMapping("/most-send-operators")
+    fun getMostSendMessageOperators(pageable: Pageable): Page<MessageInfo> {
+        return messageService.getMostSendMessageOperators(pageable)
+    }
+    @GetMapping("/most-send-users")
+    fun getMostSendMessageUsers(pageable: Pageable): Page<MessageInfo> {
+        return messageService.getMostSendMessageUsers(pageable)
     }
 }
 

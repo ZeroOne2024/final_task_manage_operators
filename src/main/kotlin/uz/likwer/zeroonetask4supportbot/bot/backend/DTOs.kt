@@ -1,6 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.bot.backend
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -37,16 +38,21 @@ data class SessionInfo(
     val rate: Short?
 )
 
+data class MessageInfo(
+    val sendingMessageAmount: Long,
+    val user: UserResponse,
+)
+
 data class RateInfo(
-    val rate: Short,
+    val rate: Double,
     val operator: UserResponse,
 )
 
 data class DateRangeDTO(
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val fromDate: Date,
+    val fromDate: LocalDateTime,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val toDate: Date
+    val toDate: LocalDateTime
 )
 
 data class QueueResponse(
