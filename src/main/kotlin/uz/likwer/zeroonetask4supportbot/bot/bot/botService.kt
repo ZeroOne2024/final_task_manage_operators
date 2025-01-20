@@ -84,4 +84,33 @@ class BotService(
         bot.execute(SetMyCommands(commandsRU, BotCommandScopeDefault(), "ru"))
         bot.execute(SetMyCommands(commandsUZ, BotCommandScopeDefault(), "uz"))
     }
+
+    fun getAllBots(): List<BotResponse> {
+        return botRepository.findAllNotDeleted().map {
+             BotResponse.torResponse(it)
+         }
+    }
+
+    fun getAllActiveBots(): List<BotResponse> {
+       return botRepository.findAllBotsByStatusAndDeletedFalse(BotStatusEnum.ACTIVE).map {
+           BotResponse.torResponse(it)
+       }
+    }
+
+    fun getOneBot(botId: Long): BotResponse? {
+       return botRepository.findByIdAndDeletedFalse(botId)?.let {
+            BotResponse.torResponse(it) ?: throw BotNOtFoundException()
+        }
+    }
+
+    fun changeBotStatus(botId: Long, status: BotStatusEnum) {
+        val bot = botRepository.findByIdAndDeletedFalse(botId) ?: throw BotNOtFoundException()
+        bot.status = status
+        botRepository.save(bot)
+    }
+
+    fun deleteBot(botId: Long) {
+        botRepository.trash(botId)?: throw BotNOtFoundException()
+    }
+
 }

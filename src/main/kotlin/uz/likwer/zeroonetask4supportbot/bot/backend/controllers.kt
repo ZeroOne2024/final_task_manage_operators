@@ -10,6 +10,22 @@ import uz.likwer.zeroonetask4supportbot.bot.bot.BotService
 class BotController(private val botService: BotService) {
     @PostMapping
     fun create(@RequestBody req: TokenRequest) = botService.createBot(req)
+
+    @GetMapping
+    fun getAll() = botService.getAllBots()
+
+    @GetMapping("{id}")
+    fun getOneBot(@PathVariable id: Long) = botService.getOneBot(id)
+
+    @PutMapping("{id}")
+    fun changeBotStatus(@PathVariable id: Long, @RequestParam status: BotStatusEnum) = botService.changeBotStatus(id, status)
+
+    @DeleteMapping("{id}")
+    fun deleteBot(@PathVariable id: Long) = botService.deleteBot(id)
+
+    @GetMapping("/active-bots")
+    fun getAllActiveBots() = botService.getAllActiveBots()
+
 }
 
 @RestController

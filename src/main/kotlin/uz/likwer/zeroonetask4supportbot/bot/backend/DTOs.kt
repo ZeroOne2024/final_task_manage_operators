@@ -1,6 +1,7 @@
 package uz.likwer.zeroonetask4supportbot.bot.backend
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import org.jetbrains.annotations.NotNull
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -63,3 +64,19 @@ data class QueueResponse(
 data class TokenRequest(
     val token: String,
 )
+
+data class BotResponse(
+     val id: Long,
+     val token: String,
+     val username: String,
+     val name: String,
+     val status: BotStatusEnum
+){
+    companion object{
+        fun torResponse(bot : Bot): BotResponse{
+            return bot.run {
+                BotResponse(id!!,token,username,name,status)
+            }
+        }
+    }
+}
