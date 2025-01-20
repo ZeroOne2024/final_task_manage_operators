@@ -57,23 +57,6 @@ class User(
     }
 }
 
-@Entity(name = "messages")
-class Messages(
-    @ManyToOne @JoinColumn(name = "user_id", nullable = false) val user: User,
-    @ManyToOne @JoinColumn(name = "session_id", nullable = false) val session: Session,
-    @Column(length = 15000) val data: String,
-    @Column(nullable = false) val messageId: Int,
-    @Column(nullable = true) var messageBotId: Int? = null,
-    @Column(nullable = true) val replyMessageId: Int? = null,
-    @Enumerated(value = EnumType.STRING) val botMessageType: BotMessageType,
-    @Column(nullable = true) var text: String? = null,
-    @Column(nullable = true) var caption: String? = null,
-    @Column(nullable = true) val fileId: String? = null,
-    @OneToOne @JoinColumn(nullable = true) val location: Location? = null,
-    @OneToOne @JoinColumn(nullable = true) val contact: Contact? = null,
-    @OneToOne @JoinColumn(nullable = true) val dice: Dice? = null
-) : BaseEntity()
-
 @Entity
 class Session(
     @ManyToOne val user: User,
@@ -122,13 +105,15 @@ class BotMessage(
     @ManyToOne val user: User,
     @ManyToOne val session: Session,
     @Column(nullable = false) val messageId: Int,
-    @Column(columnDefinition = "text") val text: String,
-    @Enumerated(EnumType.STRING) val messageType: BotMessageType,
-    @Column(nullable = true) val botMessageId: Int?,
-    @Column(nullable = true) val contactId: Long?,
-    @Column(nullable = true) val locationId: Long?,
-    @Column(nullable = true) val fileId: Long?,
-    @Column(nullable = true) val diceEmoji: String?,
+    @Column(nullable = true) var botMessageId: Int?=null,
+    @Column(nullable = true) val replyMessageId: Int? = null,
+    @Column(nullable = true) var text: String? = null,
+    @Column(nullable = true) var caption: String? = null,
+    @Enumerated(value = EnumType.STRING) val botMessageType: BotMessageType,
+    @Column(nullable = true) val fileId: String? = null,
+    @OneToOne @JoinColumn(nullable = true) val location: Location? = null,
+    @OneToOne @JoinColumn(nullable = true) val contact: Contact? = null,
+    @OneToOne @JoinColumn(nullable = true) val dice: Dice? = null
 ) : BaseEntity()
 
 

@@ -49,15 +49,15 @@ data class RateInfo(
 )
 
 data class DateRangeDTO(
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val fromDate: LocalDateTime,
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val toDate: LocalDateTime
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    val fromDate: Date,
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    val toDate: Date
 )
 
 data class QueueResponse(
     val sessionId: Long,
-    val messages: CopyOnWriteArrayList<Messages>
+    val messages: CopyOnWriteArrayList<BotMessage>
 )
 
 data class TokenRequest(

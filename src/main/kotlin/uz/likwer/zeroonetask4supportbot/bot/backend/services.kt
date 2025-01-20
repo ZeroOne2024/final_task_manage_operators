@@ -29,23 +29,22 @@ interface SessionService {
     fun getHighRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo>
     fun getLowRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo>
     fun getOperatorRate(operatorId: Long, pageable: Pageable): Page<RateInfo>
-    fun getOperatorsAverageRates(pageable: Pageable): Page<RateInfo>
+//    fun getOperatorsAverageRates(pageable: Pageable): Page<RateInfo>
 }
 
 interface MessageService {
-    fun getMostSendMessageUsers(pageable: Pageable): Page<MessageInfo>
-    fun getMostSendMessageOperators(pageable: Pageable): Page<MessageInfo>
+//    fun getMostSendMessageUsers(pageable: Pageable): Page<MessageInfo>
+//    fun getMostSendMessageOperators(pageable: Pageable): Page<MessageInfo>
 }
 
 @Service
-class MessageServiceImpl(private val messageRepository: MessageRepository) : MessageService {
-    override fun getMostSendMessageUsers(pageable: Pageable): Page<MessageInfo> {
-        return toMessageInfo(messageRepository.findMostActiveUsers(pageable))
-    }
-
-    override fun getMostSendMessageOperators(pageable: Pageable): Page<MessageInfo> {
-        return toMessageInfo(messageRepository.findMostActiveOperators(pageable))
-    }
+class MessageServiceImpl(private val messageRepository: BotMessageRepository) : MessageService {
+//    override fun getMostSendMessageUsers(pageable: Pageable): Page<MessageInfo> {
+//        return toMessageInfo(messageRepository.findMostActiveUsers(pageable))
+//    }
+//    override fun getMostSendMessageOperators(pageable: Pageable): Page<MessageInfo> {
+//        return toMessageInfo(messageRepository.findMostActiveOperators(pageable))
+//    }
 
     private fun toMessageInfo(results: Page<Array<Any>>): Page<MessageInfo> {
         return results.map { result ->
@@ -199,9 +198,9 @@ class SessionServiceImpl(
         return toRateInfo(sessionRepository.findOperatorRates(operatorId, pageable))
     }
 
-    override fun getOperatorsAverageRates(pageable: Pageable): Page<RateInfo> {
-        return toRateInfo(sessionRepository.findOperatorsWithAverageRate(pageable))
-    }
+//    override fun getOperatorsAverageRates(pageable: Pageable): Page<RateInfo> {
+//        return toRateInfo(sessionRepository.findOperatorsWithAverageRate(pageable))
+//    }
 
     private fun toSessionInfo(sessions: Page<Session>): Page<SessionInfo> {
         return sessions.map { session ->

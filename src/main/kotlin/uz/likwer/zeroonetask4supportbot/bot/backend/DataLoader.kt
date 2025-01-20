@@ -56,7 +56,7 @@ class DataLoader(
             val sessionMessagesMap = groupedMessages.groupBy {
                 it["session"] as Session
             }.mapValues { entry ->
-                entry.value.map { it["message"] as Messages }
+                entry.value.map { it["message"] as BotMessage }
             }
 
             sessionMessagesMap.forEach { (session, messages) ->

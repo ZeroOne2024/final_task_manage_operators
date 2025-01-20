@@ -45,9 +45,9 @@ open class SupportTelegramBot(
     private val messageSource: MessageSource,
     private val doubleOperatorRepository: DoubleOperatorRepository,
     private val executorService: Executor = Executors.newFixedThreadPool(20),
-    val queueEn: ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>> = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>(),
-    val queueUz: ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>> = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>(),
-    val queueRu: ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>> = ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>()
+    val queueEn: ConcurrentHashMap<Long, CopyOnWriteArrayList<BotMessage>> = ConcurrentHashMap<Long, CopyOnWriteArrayList<BotMessage>>(),
+    val queueUz: ConcurrentHashMap<Long, CopyOnWriteArrayList<BotMessage>> = ConcurrentHashMap<Long, CopyOnWriteArrayList<BotMessage>>(),
+    val queueRu: ConcurrentHashMap<Long, CopyOnWriteArrayList<BotMessage>> = ConcurrentHashMap<Long, CopyOnWriteArrayList<BotMessage>>()
 ) : TelegramLongPollingBot(token) {
     companion object {
         val activeBots = mutableMapOf<String, SupportTelegramBot>()
@@ -239,6 +239,8 @@ open class SupportTelegramBot(
 
     private fun sendMainMenuMsg(user: User) {
         val newText = """
+            ${getMsg("MENU", user)}:
+            
             /setLang - ${getMsg("SET_LANG", user)}
         """.trimIndent()
         val sendMessage = SendMessage(user.id.toString(), newText)
@@ -318,7 +320,7 @@ open class SupportTelegramBot(
         } else null
     }
 
-    private fun newSessionMsg(update: Update, session: Session, user: User): Messages {
+    private fun newSessionMsg(update: Update, session: Session, user: User): BotMessage {
         val message = update.message
         val messageReplyId = if (message.isReply) message.replyToMessage.messageId else null
         val typeAndFileId = determineMessageType(message)
@@ -327,7 +329,7 @@ open class SupportTelegramBot(
         val dice = saveDice(message)
 
         return botMessageRepository.save(
-            Messages(
+            BotMessage(
                 user = user,
                 session = session,
                 messageId = message.messageId,
@@ -338,8 +340,7 @@ open class SupportTelegramBot(
                 fileId = typeAndFileId.second,
                 location = location,
                 contact = contact,
-                dice = dice,
-                data = message.toString()
+                dice = dice
             )
         )
     }
@@ -500,15 +501,15 @@ open class SupportTelegramBot(
 
         if (!newText.isNullOrBlank() && message.botMessageType == BotMessageType.TEXT) {
             message.text = newText
-            if (message.messageBotId != null) {
+            if (message.botMessageId != null) {
                 if (message.session.user.id == chatId) {
                     val editMessage = EditMessageText(newText)
-                    editMessage.messageId = message.messageBotId!!
+                    editMessage.messageId = message.botMessageId!!
                     editMessage.chatId = message.session.operator?.id.toString()
                     this.execute(editMessage)
                 } else {
                     val editMessage = EditMessageText(newText)
-                    editMessage.messageId = message.messageBotId!!
+                    editMessage.messageId = message.botMessageId!!
                     editMessage.chatId = message.session.user.id.toString()
                     this.execute(editMessage)
                 }
@@ -520,10 +521,10 @@ open class SupportTelegramBot(
             )
         ) {
             message.caption = newCaption
-            if (message.messageBotId != null) {
+            if (message.botMessageId != null) {
                 val editMessage = EditMessageCaption()
                 editMessage.caption = newCaption
-                editMessage.messageId = message.messageBotId!!
+                editMessage.messageId = message.botMessageId!!
                 if (message.session.user.id == chatId) {
                     editMessage.chatId = message.session.operator?.id.toString()
                 } else {
@@ -557,24 +558,24 @@ open class SupportTelegramBot(
         )
     }
 
-    private fun sendMessageToUser(user: User, message: Messages, session: Session, absSender: AbsSender) {
+    private fun sendMessageToUser(user: User, message: BotMessage, session: Session, absSender: AbsSender) {
         val replyMessageId = message.replyMessageId?.let { replyId ->
-            botMessageRepository.findBySessionIdAndMessageBotId(session.id!!, replyId)?.messageId
-                ?: botMessageRepository.findBySessionIdAndMessageId(session.id!!, replyId)?.messageBotId
+            botMessageRepository.findBySessionIdAndBotMessageId(session.id!!, replyId)?.messageId
+                ?: botMessageRepository.findBySessionIdAndMessageId(session.id!!, replyId)?.botMessageId
         }
         val chatId = user.id.toString()
         val copyMessage = CopyMessage(chatId, message.user.id.toString(), message.messageId)
         replyMessageId?.let { copyMessage.replyToMessageId = it }
         if (!message.caption.isNullOrEmpty()) copyMessage.caption = message.caption
         val messageId: Long = absSender.execute(copyMessage).messageId
-        message.messageBotId = messageId.toInt()
+        message.botMessageId = messageId.toInt()
         message.deleted = true
         botMessageRepository.save(message)
     }
 
 
     @Synchronized
-    fun addMessageToMap(sessionId: Long, message: Messages, language: String) {
+    fun addMessageToMap(sessionId: Long, message: BotMessage, language: String) {
         val targetQueue = when (language.lowercase()) {
             "en" -> queueEn
             "uz" -> queueUz
@@ -682,8 +683,11 @@ open class SupportTelegramBot(
 
                     sendUserInfoForOperator(operator, session.user)
 
-                    val secondBot = findBotById(operator.botId)
-                    this.execute(SendMessage(operator.id.toString(), ""))
+                    if (operator.botId != botId) {
+                        val secondBot = findBotById(operator.botId)!!
+                        val newText = getMsg("YOU_HAVE_NEW_MESSAGE_FROM", operator) + " @${this.username}"
+                        secondBot.execute(SendMessage(operator.id.toString(), newText))
+                    }
                     for (message in queuedSession.messages) {
                         sendMessageToUser(saved, message, session, this)
                     }
@@ -766,7 +770,7 @@ open class SupportTelegramBot(
         )
 
         var smallestSession: Long? = null
-        var smallestQueue: ConcurrentHashMap<Long, CopyOnWriteArrayList<Messages>>? = null
+        var smallestQueue: ConcurrentHashMap<Long, CopyOnWriteArrayList<BotMessage>>? = null
 
         for (language in languages) {
             val queue = languageToQueueMap[language]
@@ -803,7 +807,7 @@ open class SupportTelegramBot(
 
             sendChatStoppedMsg(operator)
             sendRateMsg(user, operator, session)
-            sendAskYourQuestionMsg(user)
+            sendMainMenuMsg(user)
         }
     }
 
@@ -870,7 +874,7 @@ open class SupportTelegramBot(
         sessionRepository.save(session)
     }
 
-    private fun prepareMessageText(message: Messages, session: Session, userLang: String): Messages {
+    private fun prepareMessageText(message: BotMessage, session: Session, userLang: String): BotMessage {
         val prefix = if (message.user.isOperator())
             "${getMsg("OPERATOR", session.user)}:\n"
         else "${getMsg("USER", session.user)}:\n"

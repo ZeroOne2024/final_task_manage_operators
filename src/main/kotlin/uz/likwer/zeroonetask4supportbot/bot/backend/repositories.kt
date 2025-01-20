@@ -87,18 +87,18 @@ interface UserRepository : JpaRepository<User, Long> {
 
 }
 
-interface BotMessageRepository : BaseRepository<Messages> {
-    fun findByUserIdAndMessageBotId(userId: Long, messageBotId: Int): Messages?
-    fun findAllBySessionId(sessionId: Long): List<Messages>
-    fun findAllByUserId(userId: Long): List<Messages>
-    fun findBySessionIdAndMessageBotId(sessionId: Long, messageBotId: Int): Messages?
-    fun findBySessionIdAndMessageId(sessionId: Long, messageId: Int): Messages?
-    fun findByUserIdAndMessageId(userId: Long, messageId: Int): Messages?
-    fun findAllBySessionIdOrderByCreatedDateAsc(sessionId: Long): List<Messages>
+interface BotMessageRepository : BaseRepository<BotMessage> {
+//    fun findByUserIdAndMessageBotId(userId: Long, messageBotId: Int): BotMessage?
+//    fun findAllBySessionId(sessionId: Long): List<BotMessage>
+//    fun findAllByUserId(userId: Long): List<BotMessage>
+    fun findBySessionIdAndBotMessageId(sessionId: Long, messageBotId: Int): BotMessage?
+    fun findBySessionIdAndMessageId(sessionId: Long, messageId: Int): BotMessage?
+    fun findByUserIdAndMessageId(userId: Long, messageId: Int): BotMessage?
+    fun findAllBySessionIdOrderByCreatedDateAsc(sessionId: Long): List<BotMessage>
 
     @Query("""
         SELECT NEW map(m.session as session, m as message)
-        FROM messages m
+        FROM bot_message m
         WHERE m.deleted = false
         ORDER BY m.session.id ASC, m.id ASC
     """)
