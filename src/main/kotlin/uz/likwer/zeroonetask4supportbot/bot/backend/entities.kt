@@ -103,7 +103,7 @@ class Bot(
     @Column(nullable = false) val token: String,
     @Column(nullable = false) val username: String,
     val name: String,
-    @Enumerated(value = EnumType.STRING) val status: BotStatusEnum = BotStatusEnum.ACTIVE,
+    @Enumerated(value = EnumType.STRING) var status: BotStatusEnum = BotStatusEnum.ACTIVE,
 ) : BaseEntity()
 
 @Entity(name = "bot_message")

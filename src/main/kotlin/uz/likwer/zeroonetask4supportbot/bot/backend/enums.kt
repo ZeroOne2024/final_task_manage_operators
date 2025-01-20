@@ -9,7 +9,8 @@ enum class ErrorCode(val code: Int) {
     SESSION_CLOSED(105),
     MESSAGE_NOT_FOUND(106),
     UN_SUPPORTED_MESSAGE_TYPE(107),
-    NO_SESSION_IN_QUEUE(108)
+    NO_SESSION_IN_QUEUE(108),
+    BOT_NOT_FOUND(109)
 }
 
 enum class UserRole {
