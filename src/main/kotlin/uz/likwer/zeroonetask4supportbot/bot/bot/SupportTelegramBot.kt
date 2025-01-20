@@ -62,9 +62,7 @@ open class SupportTelegramBot(
                 if (update.hasMessage()) handleMessage(update)
                 if (update.hasEditedMessage()) handleEditedMessage(update)
                 if (update.hasCallbackQuery()) handleCallbackQuery(update)
-                if (update.hasMyChatMember()) {
-                    handleMyChatMember(update)
-                }
+                if (update.hasMyChatMember()) handleMyChatMember(update)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -119,7 +117,7 @@ open class SupportTelegramBot(
     open fun handleMessage(update: Update) {
         val message = update.message
 
-        getUser(message.from)?.let { user ->
+        getUser(message.from).let { user ->
             sendActionTyping(user)
 
             if (user.isUser()) {
@@ -134,6 +132,8 @@ open class SupportTelegramBot(
     open fun handleOperatorMessage(update: Update, operator: User) {
         val message = update.message
         if (operator.isTalking()) {
+            operator.botId = botId
+            userRepository.save(operator)
             sessionRepository.findLastSessionByOperatorId(operator.id)?.let { session ->
                 if (session.botId != botId) {
                     findBotById(session.botId)?.let { bot ->
