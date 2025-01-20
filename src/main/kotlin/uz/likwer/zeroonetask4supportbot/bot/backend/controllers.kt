@@ -1,21 +1,16 @@
-package uz.likwer.zeroonetask4supportbot.backend
+package uz.likwer.zeroonetask4supportbot.bot.backend
 
-import org.springframework.context.support.ResourceBundleMessageSource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.bind.annotation.ExceptionHandler
+import uz.likwer.zeroonetask4supportbot.bot.bot.BotService
 
-@ControllerAdvice
-class ExceptionHandler(private val errorMessageSource: ResourceBundleMessageSource) {
-
-    @ExceptionHandler(DBusinessException::class)
-    fun handleAccountException(exception: DBusinessException): ResponseEntity<BaseMessage> {
-        return ResponseEntity.badRequest().body(exception.getErrorMessage(errorMessageSource))
-    }
+@RestController
+@RequestMapping("/bot")
+class BotController(private val botService: BotService) {
+    @PostMapping
+    fun create(@RequestBody req: TokenRequest) = botService.createBot(req)
 }
-
 
 @RestController
 @RequestMapping("/sessions")
@@ -53,14 +48,14 @@ class SessionController(private val sessionService: SessionService) {
     @PostMapping("/operator/{operatorId}")
     fun getAllSessionOperatorDateRange(
         @PathVariable operatorId: Long,
-        @RequestBody  dto: DateRangeDTO,
+        @RequestBody dto: DateRangeDTO,
         pageable: Pageable
     ): Page<SessionInfo> {
         return sessionService.getAllSessionOperatorDateRange(operatorId, dto, pageable)
     }
 
     @GetMapping("/status")
-    fun getSessionsByStatus(@RequestParam status: SessionStatus, pageable: Pageable): Page<SessionInfo> {
+    fun getSessionsByStatus(@RequestParam status: SessionStatusEnum, pageable: Pageable): Page<SessionInfo> {
         return sessionService.getSessionsByStatus(status, pageable)
     }
 
@@ -102,16 +97,16 @@ class SessionController(private val sessionService: SessionService) {
 class PrivateUserController(
     private val userService: UserService,
     private val sessionService: SessionService
-){
+) {
 
     @PutMapping("add-operator")
-    fun addOperator(@RequestBody request: AddOperatorRequest)= userService.addOperator(request)
+    fun addOperator(@RequestBody request: AddOperatorRequest) = userService.addOperator(request)
 
     @GetMapping("get-operators")
     fun getOperators() = userService.getAllOperators()
 
     @GetMapping("get-users")
-    fun getUsers()= userService.getAllUsers()
+    fun getUsers() = userService.getAllUsers()
 
     @DeleteMapping("delete-operator/{operatorId}")
     fun deleteOperator(@PathVariable operatorId: Long) = userService.deleteOperator(operatorId)
@@ -120,7 +115,8 @@ class PrivateUserController(
     fun deleteUser(@PathVariable userId: Long) = userService.deleteUser(userId)
 
     @GetMapping("get-sessions-of-user/{userId}")
-    fun getAllSessionUser(@PathVariable userId: Long, pageable: Pageable ) = sessionService.getAllSessionUser(userId,pageable)
+    fun getAllSessionUser(@PathVariable userId: Long, pageable: Pageable) =
+        sessionService.getAllSessionUser(userId, pageable)
 
     @GetMapping("get-operator/{id}")
     fun getOperatorById(@PathVariable id: Long) = userService.getOperatorById(id)

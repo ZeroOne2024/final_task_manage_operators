@@ -1,25 +1,7 @@
-package uz.likwer.zeroonetask4supportbot.bot
-
-import com.pengrad.telegrambot.TelegramBot
-import uz.likwer.zeroonetask4supportbot.backend.BotTools
-import uz.likwer.zeroonetask4supportbot.component.SpringContext
+package uz.likwer.zeroonetask4supportbot.bot.bot
 
 class Utils {
     companion object {
-        private var bot: TelegramBot? = null
-        fun telegramBot(): TelegramBot {
-            if (bot == null)
-                return SpringContext.getBean(TelegramBot::class.java)
-            return bot as TelegramBot
-        }
-
-        private var botTools: BotTools? = null
-        fun botTools(): BotTools {
-            if (botTools == null)
-                return SpringContext.getBean(BotTools::class.java)
-            return botTools as BotTools
-        }
-
         fun String.prettyPhoneNumber(): String {
             return try {
                 var phone = this.trim()

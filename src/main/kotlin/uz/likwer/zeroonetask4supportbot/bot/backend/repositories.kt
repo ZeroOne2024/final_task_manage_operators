@@ -1,7 +1,6 @@
-package uz.likwer.zeroonetask4supportbot.backend
+package uz.likwer.zeroonetask4supportbot.bot.backend
 
 import jakarta.persistence.EntityManager
-import jakarta.transaction.Transactional
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
@@ -14,6 +13,7 @@ import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import org.springframework.data.repository.NoRepositoryBean
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @NoRepositoryBean
@@ -87,7 +87,7 @@ interface UserRepository : JpaRepository<User, Long> {
 
 }
 
-interface MessageRepository : BaseRepository<Messages> {
+interface BotMessageRepository : BaseRepository<Messages> {
     fun findByUserIdAndMessageBotId(userId: Long, messageBotId: Int): Messages?
     fun findAllBySessionId(sessionId: Long): List<Messages>
     fun findAllByUserId(userId: Long): List<Messages>
@@ -97,12 +97,12 @@ interface MessageRepository : BaseRepository<Messages> {
     fun findAllBySessionIdOrderByCreatedDateAsc(sessionId: Long): List<Messages>
 
     @Query("""
-        SELECT NEW map(m.session.id as sessionId, m as message)
+        SELECT NEW map(m.session as session, m as message)
         FROM messages m
         WHERE m.deleted = false
         ORDER BY m.session.id ASC, m.id ASC
     """)
-    fun findMessagesGroupedBySessionId(): List<Map<String, Any>>
+    fun findMessagesGroupedBySessionId(): List<Map<Any, Any>>
 
 }
 
@@ -113,7 +113,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         """
     SELECT s.operator, SUM(s.rate)
-    FROM sessions s 
+    FROM Session s 
     WHERE s.rate IS NOT NULL 
       AND s.createdDate BETWEEN :fromDate AND :toDate
     GROUP BY s.operator 
@@ -129,7 +129,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         """
     SELECT s.operator, SUM(s.rate)
-    FROM sessions s 
+    FROM Session s 
     WHERE s.rate IS NOT NULL 
       AND s.createdDate BETWEEN :fromDate AND :toDate
     GROUP BY s.operator 
@@ -145,7 +145,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         """
     SELECT s.operator, s.rate
-    FROM sessions s
+    FROM Session s
     WHERE s.operator.id = :operatorId
       AND s.rate IS NOT NULL
     """
@@ -158,7 +158,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         """
     SELECT s
-    FROM sessions s
+    FROM Session s
     WHERE s.operator.id = :operatorId
       AND s.createdDate BETWEEN :fromDate AND :toDate
     """
@@ -173,7 +173,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         """
     SELECT s
-    FROM sessions s
+    FROM Session s
     WHERE s.user.id = :userId
       AND s.createdDate BETWEEN :fromDate AND :toDate
     """
@@ -189,7 +189,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         """
     SELECT s.operator,sum(s.rate)
-    FROM sessions s 
+    FROM Session s 
     WHERE s.rate IS NOT NULL 
     GROUP BY s.operator 
     ORDER BY sum(s.rate) DESC
@@ -200,7 +200,7 @@ interface SessionRepository : BaseRepository<Session> {
     @Query(
         """
     SELECT s.operator,sum(s.rate)
-    FROM sessions s 
+    FROM Session s 
     WHERE s.rate IS NOT NULL 
     GROUP BY s.operator 
     ORDER BY sum(s.rate) ASC
@@ -209,27 +209,31 @@ interface SessionRepository : BaseRepository<Session> {
     fun findLowestRatedOperators(pageable: Pageable): Page<Array<Any>>
 
     @Query(
-        "SELECT s FROM sessions s " +
+        "SELECT s FROM Session s " +
                 "WHERE s.user.id = :userId " +
                 "ORDER BY s.createdDate DESC limit 1"
     )
     fun findLastSessionByUserId(@Param("userId") userId: Long): Session?
 
     @Query(
-        "SELECT s FROM sessions s " +
+        "SELECT s FROM Session s " +
                 "WHERE s.operator.id = :operatorId " +
                 "ORDER BY s.createdDate DESC LIMIT 1"
     )
     fun findLastSessionByOperatorId(@Param("operatorId") operatorId: Long): Session?
-    fun findByOperatorIdAndStatus(operatorId: Long, status: SessionStatus): Session?
+    fun findByOperatorIdAndStatus(operatorId: Long, status: SessionStatusEnum): Session?
     fun getSessionByUserId(userId: Long, pageable: Pageable): Page<Session>
     fun getSessionByOperatorId(operatorId: Long, pageable: Pageable): Page<Session>
-    fun getSessionByStatus(status: SessionStatus, pageable: Pageable): Page<Session>
+    fun getSessionByStatus(status: SessionStatusEnum, pageable: Pageable): Page<Session>
 
 }
 
 interface LocationRepository : BaseRepository<Location>
 interface ContactRepository : BaseRepository<Contact>
+interface BotRepository : BaseRepository<Bot> {
+    fun findAllByStatus(status: BotStatusEnum): MutableList<Bot>
+}
+
 interface DoubleOperatorRepository : BaseRepository<DoubleOperator> {
     fun existsByOperatorIdAndSessionId(operatorId: Long, sessionId: Long): Boolean
     fun findFirstBySessionIdOrderByCreatedDateDesc(sessionId: Long): DoubleOperator?

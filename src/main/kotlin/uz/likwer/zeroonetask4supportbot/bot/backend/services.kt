@@ -1,4 +1,4 @@
-package uz.likwer.zeroonetask4supportbot.backend
+package uz.likwer.zeroonetask4supportbot.bot.backend
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -22,7 +22,7 @@ interface SessionService {
     fun getAllSessionOperator(operatorId: Long, pageable: Pageable): Page<SessionInfo>
     fun getAllSessionUserDateRange(userId: Long, dto: DateRangeDTO, pageable: Pageable): Page<SessionInfo>
     fun getAllSessionOperatorDateRange(operatorId: Long, dto: DateRangeDTO, pageable: Pageable): Page<SessionInfo>
-    fun getSessionsByStatus(status: SessionStatus, pageable: Pageable): Page<SessionInfo>
+    fun getSessionsByStatus(status: SessionStatusEnum, pageable: Pageable): Page<SessionInfo>
     fun getHighRateOperator(pageable: Pageable): Page<RateInfo>
     fun getLowRateOperator(pageable: Pageable): Page<RateInfo>
     fun getHighRateOperatorDateRange(dto: DateRangeDTO, pageable: Pageable): Page<RateInfo>
@@ -39,7 +39,7 @@ class UserServiceImpl(
         request.run {
             val user: User
             val optional = userRepository.findById(userId)
-            if (optional.isEmpty) throw UserNotFoundException()
+            if (!optional.isPresent) throw UserNotFoundException()
             user = optional.get()
             userRole.let { user.role = it }
             languages.let { user.languages = it }
@@ -64,7 +64,7 @@ class UserServiceImpl(
     override fun deleteOperator(operatorId: Long): UserResponse {
 
         val optional = userRepository.findById(operatorId)
-        if (optional.isEmpty) throw UserNotFoundException()
+        if (!optional.isPresent) throw UserNotFoundException()
         val user = optional.get()
         user.role = UserRole.USER
         user.operatorStatus = null
@@ -73,7 +73,7 @@ class UserServiceImpl(
 
     override fun deleteUser(userId: Long) {
         val optional = userRepository.findById(userId)
-        if (optional.isEmpty) throw UserNotFoundException()
+        if (!optional.isPresent) throw UserNotFoundException()
         val user = optional.get()
         user.deleted = true
         userRepository.save(user)
@@ -82,13 +82,13 @@ class UserServiceImpl(
     override fun getUserById(id: Long): UserResponse {
         userRepository.findByIdAndDeletedFalse(id)?.let {
             return UserResponse.toResponse(it)
-        }?: throw UserNotFoundException()
+        } ?: throw UserNotFoundException()
     }
 
     override fun getOperatorById(id: Long): UserResponse {
-        userRepository.findByIdAndRoleAndDeletedFalse(id,UserRole.OPERATOR)?.let {
+        userRepository.findByIdAndRoleAndDeletedFalse(id, UserRole.OPERATOR)?.let {
             return UserResponse.toResponse(it)
-        }?: throw UserNotFoundException()
+        } ?: throw UserNotFoundException()
     }
 }
 
@@ -147,7 +147,7 @@ class SessionServiceImpl(
         )
     }
 
-    override fun getSessionsByStatus(status: SessionStatus, pageable: Pageable): Page<SessionInfo> {
+    override fun getSessionsByStatus(status: SessionStatusEnum, pageable: Pageable): Page<SessionInfo> {
         return toSessionInfo(sessionRepository.getSessionByStatus(status, pageable))
     }
 
@@ -176,7 +176,7 @@ class SessionServiceImpl(
         return sessions.map { session ->
             SessionInfo(
                 user = UserResponse.toResponse(session.user),
-                status = session.status,
+                status = session.status!!,
                 operator = session.operator?.let { UserResponse.toResponse(it) },
                 rate = session.rate
             )
@@ -186,7 +186,7 @@ class SessionServiceImpl(
     private fun toSessionInfo(session: Session): SessionInfo {
         return SessionInfo(
             user = UserResponse.toResponse(session.user),
-            status = session.status,
+            status = session.status!!,
             operator = session.operator?.let { UserResponse.toResponse(it) },
             rate = session.rate
         )
@@ -199,6 +199,5 @@ class SessionServiceImpl(
             RateInfo(rate = totalRate.toShort(), operator = UserResponse.toResponse(operator))
         }
     }
-
-
 }
+

@@ -1,7 +1,6 @@
-package uz.likwer.zeroonetask4supportbot.backend
+package uz.likwer.zeroonetask4supportbot.bot.backend
 
 enum class ErrorCode(val code: Int) {
-
     USER_NOT_FOUND(104),
     SOMETHING_WENT_WRONG(100),
     USER_ALREADY_EXISTS(101),
@@ -14,31 +13,25 @@ enum class ErrorCode(val code: Int) {
 }
 
 enum class UserRole {
-
     ADMIN,
     USER,
     OPERATOR
-
 }
 
 enum class OperatorStatus {
-
     ACTIVE,
     INACTIVE,
     BUSY,
     PAUSED
-
 }
 
-enum class Language {
-
+enum class LanguageEnum {
     UZ,
     RU,
     EN
-
 }
 
-enum class MessageType {
+enum class BotMessageType {
     TEXT,
     PHOTO,
     VIDEO,
@@ -51,24 +44,26 @@ enum class MessageType {
     ANIMATION,
     DOCUMENT,
     VOICE
-
 }
 
-enum class UserState {
-
+enum class UserStateEnum {
     NEW_USER,
     SEND_PHONE_NUMBER,
     SEND_FULL_NAME,
     CHOOSE_LANG,
     ACTIVE_USER,
-    TALKING
+    ASK_YOUR_QUESTION,
+    TALKING,
+    WAITING_OPERATOR
 }
 
-enum class SessionStatus {
-
+enum class SessionStatusEnum {
     WAITING,
     BUSY,
     CLOSED
-
 }
 
+enum class BotStatusEnum {
+    STOPPED,
+    ACTIVE,
+}

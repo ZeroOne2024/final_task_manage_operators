@@ -1,4 +1,4 @@
-package uz.likwer.zeroonetask4supportbot.backend
+package uz.likwer.zeroonetask4supportbot.bot.backend
 
 import jakarta.persistence.*
 import org.hibernate.annotations.ColumnDefault
@@ -30,11 +30,12 @@ class User(
     @Column(nullable = false, length = 64) val username: String,
     @Column(nullable = false, length = 124) var fullName: String,
     @Column(nullable = false, length = 13) var phoneNumber: String,
-    @ElementCollection(targetClass = Language::class, fetch = FetchType.EAGER)
+    @Column(nullable = false) var botId: Long,
+    @ElementCollection(targetClass = LanguageEnum::class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_language", joinColumns = [JoinColumn(name = "user_id")])
     @Enumerated(EnumType.STRING)
-    var languages: MutableList<Language> = mutableListOf(),
-    @Enumerated(value = EnumType.STRING) var state: UserState = UserState.NEW_USER,
+    var languages: MutableSet<LanguageEnum> = mutableSetOf(),
+    @Enumerated(value = EnumType.STRING) var state: UserStateEnum = UserStateEnum.NEW_USER,
     @Enumerated(value = EnumType.STRING) var operatorStatus: OperatorStatus? = null,
     @Enumerated(value = EnumType.STRING) var role: UserRole? = UserRole.USER,
 
@@ -43,49 +44,57 @@ class User(
     fun isOperator(): Boolean {
         return role == UserRole.OPERATOR
     }
-}
 
+    fun isUser(): Boolean {
+        return role == UserRole.USER
+    }
+
+    fun isTalking(): Boolean {
+        return state == UserStateEnum.TALKING || operatorStatus == OperatorStatus.BUSY
+    }
+    fun isActiveOperator(): Boolean {
+        return operatorStatus == OperatorStatus.ACTIVE
+    }
+}
 
 @Entity(name = "messages")
 class Messages(
     @ManyToOne @JoinColumn(name = "user_id", nullable = false) val user: User,
     @ManyToOne @JoinColumn(name = "session_id", nullable = false) val session: Session,
+    @Column(length = 15000) val data: String,
     @Column(nullable = false) val messageId: Int,
     @Column(nullable = true) var messageBotId: Int? = null,
     @Column(nullable = true) val replyMessageId: Int? = null,
-    @Enumerated(value = EnumType.STRING) val messageType: MessageType,
+    @Enumerated(value = EnumType.STRING) val botMessageType: BotMessageType,
     @Column(nullable = true) var text: String? = null,
     @Column(nullable = true) var caption: String? = null,
     @Column(nullable = true) val fileId: String? = null,
     @OneToOne @JoinColumn(nullable = true) val location: Location? = null,
     @OneToOne @JoinColumn(nullable = true) val contact: Contact? = null,
-    @OneToOne @JoinColumn(nullable = true) val dice: Dice? = null,
+    @OneToOne @JoinColumn(nullable = true) val dice: Dice? = null
 ) : BaseEntity()
 
-@Entity(name = "sessions")
+@Entity
 class Session(
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    val user: User,
-    @Enumerated(value = EnumType.STRING)
-    var status: SessionStatus = SessionStatus.WAITING,
-    @ManyToOne
-    @JoinColumn(name = "operator_id", nullable = true)
-    var operator: User? = null,
-    @Column(nullable = true)
-    var rate: Short? = null
-) : BaseEntity()
+    @ManyToOne val user: User,
+    val botId: Long,
+    @Enumerated(EnumType.STRING) var status: SessionStatusEnum? = SessionStatusEnum.WAITING,
+    @ManyToOne var operator: User? = null,
+    var rate: Short? = null,
+) : BaseEntity() {
+    fun hasOperator(): Boolean {
+        return operator != null
+    }
+    fun isClosed():Boolean{
+        return status == SessionStatusEnum.CLOSED
+    }
+}
+
 
 @Entity(name = "double_operator")
 class DoubleOperator(
     @ManyToOne val operator: User,
     @ManyToOne val session: Session
-) : BaseEntity()
-
-@Entity(name = "contacts")
-class Contact(
-    @Column(nullable = false) val name: String,
-    @Column(nullable = false) val phone: String,
 ) : BaseEntity()
 
 @Entity(name = "location")
@@ -98,4 +107,33 @@ class Location(
 class Dice(
     @Column(nullable = false) val value: Int,
     @Column(nullable = false) val emoji: String,
+) : BaseEntity()
+
+@Entity
+class Bot(
+    @Column(nullable = false) val token: String,
+    @Column(nullable = false) val username: String,
+    val name: String,
+    @Enumerated(value = EnumType.STRING) val status: BotStatusEnum = BotStatusEnum.ACTIVE,
+) : BaseEntity()
+
+@Entity(name = "bot_message")
+class BotMessage(
+    @ManyToOne val user: User,
+    @ManyToOne val session: Session,
+    @Column(nullable = false) val messageId: Int,
+    @Column(columnDefinition = "text") val text: String,
+    @Enumerated(EnumType.STRING) val messageType: BotMessageType,
+    @Column(nullable = true) val botMessageId: Int?,
+    @Column(nullable = true) val contactId: Long?,
+    @Column(nullable = true) val locationId: Long?,
+    @Column(nullable = true) val fileId: Long?,
+    @Column(nullable = true) val diceEmoji: String?,
+) : BaseEntity()
+
+
+@Entity
+class Contact(
+    @Column(nullable = false) val name: String,
+    @Column(nullable = false) val phoneNumber: String,
 ) : BaseEntity()

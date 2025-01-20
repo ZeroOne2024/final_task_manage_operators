@@ -7,7 +7,7 @@ import org.springframework.context.support.ResourceBundleMessageSource
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.scheduling.annotation.EnableScheduling
-import uz.likwer.zeroonetask4supportbot.backend.BaseRepositoryImpl
+import uz.likwer.zeroonetask4supportbot.bot.backend.BaseRepositoryImpl
 
 @SpringBootApplication
 @EnableJpaRepositories(

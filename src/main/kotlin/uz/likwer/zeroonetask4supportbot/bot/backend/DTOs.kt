@@ -1,4 +1,4 @@
-package uz.likwer.zeroonetask4supportbot.backend
+package uz.likwer.zeroonetask4supportbot.bot.backend
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.util.*
@@ -9,7 +9,7 @@ data class BaseMessage(val code: Int, val message: String?)
 data class AddOperatorRequest(
     val userId: Long,
     val userRole: UserRole,
-    val languages: MutableList<Language>
+    val languages: MutableSet<LanguageEnum>
 )
 
 data class UserResponse(
@@ -17,13 +17,13 @@ data class UserResponse(
     val username: String,
     val fullName: String,
     val phoneNumber: String,
-    val language: List<Language>,
+    val language: Set<LanguageEnum>,
     val role: UserRole?
-){
-    companion object{
-        fun toResponse(user: User): UserResponse{
+) {
+    companion object {
+        fun toResponse(user: User): UserResponse {
             user.run {
-                return UserResponse(id!!,username,fullName,phoneNumber,languages,role)
+                return UserResponse(id, username, fullName, phoneNumber, languages, role)
             }
         }
     }
@@ -32,7 +32,7 @@ data class UserResponse(
 
 data class SessionInfo(
     val user: UserResponse,
-    val status: SessionStatus,
+    val status: SessionStatusEnum,
     val operator: UserResponse?,
     val rate: Short?
 )
@@ -52,4 +52,8 @@ data class DateRangeDTO(
 data class QueueResponse(
     val sessionId: Long,
     val messages: CopyOnWriteArrayList<Messages>
+)
+
+data class TokenRequest(
+    val token: String,
 )
