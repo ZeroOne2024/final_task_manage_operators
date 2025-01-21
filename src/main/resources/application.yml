@@ -1,15 +1,15 @@
 server:
-  port: 1024
+  port: 80
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5432/support_bot_db
     username: postgres
-    password: 2522
+    password: Sobirov0717
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: false
     properties:
       hibernate.format_sql: false

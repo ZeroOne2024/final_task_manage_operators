@@ -230,5 +230,7 @@ class SessionServiceImpl(
             RateInfo(rate = roundedRate, operator = UserResponse.toResponse(operator))
         }
     }
+
+     //
 }
 

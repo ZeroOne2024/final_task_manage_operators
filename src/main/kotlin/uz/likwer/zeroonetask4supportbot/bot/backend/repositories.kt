@@ -233,7 +233,6 @@ interface ContactRepository : BaseRepository<Contact>
 
 interface BotRepository : BaseRepository<Bot> {
     fun findAllByStatus(status: BotStatusEnum): MutableList<Bot>
-    fun findAllDeletedFalse(): List<Bot>
     fun findAllBotsByStatusAndDeletedFalse(status: BotStatusEnum): List<Bot>
     fun findByIdAndDeletedFalse(id: Long): Bot?
 }
