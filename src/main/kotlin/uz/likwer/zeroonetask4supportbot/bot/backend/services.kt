@@ -55,6 +55,7 @@ class MessageServiceImpl(private val messageRepository: BotMessageRepository) : 
     }
 }
 
+
 @Service
 class UserServiceImpl(
     private val userRepository: UserRepository
@@ -85,6 +86,7 @@ class UserServiceImpl(
             UserResponse.toResponse(it)
         }
     }
+
 
     override fun deleteOperator(operatorId: Long): UserResponse {
 
